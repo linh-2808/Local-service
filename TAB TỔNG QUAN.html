@@ -1,0 +1,426 @@
+
+<h2 class="sr-only">Admin dashboard với KPI cards có khung viền, biểu đồ đơn hàng, cảnh báo hệ thống và bảng đối tác có bộ lọc nâng cao</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.dash{display:flex;min-height:100vh;background:var(--color-background-tertiary);font-size:13px;font-family:var(--font-sans)}
+.sidebar{width:196px;min-width:196px;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);padding:0;display:flex;flex-direction:column}
+.sb-brand{padding:14px 16px;font-weight:500;font-size:14px;color:var(--color-text-primary);border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:8px}
+.sb-section{padding:12px 16px 4px;font-size:10.5px;font-weight:500;color:var(--color-text-tertiary);letter-spacing:.6px;text-transform:uppercase}
+.sb-item{padding:6px 14px;margin:1px 6px;border-radius:var(--border-radius-md);color:var(--color-text-secondary);cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12.5px}
+.sb-item:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.sb-item.active{background:var(--color-background-info);color:var(--color-text-info);font-weight:500}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar-title{font-size:14px;font-weight:500;color:var(--color-text-primary)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.badge-alert{background:#FCEBEB;color:#A32D2D;font-size:11px;padding:3px 9px;border-radius:10px;font-weight:500;border:0.5px solid #F09595;display:flex;align-items:center;gap:4px}
+.av{width:28px;height:28px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#185FA5}
+.content{padding:16px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.kpi-card{background:var(--color-background-primary);border:1px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:13px 14px;position:relative}
+.kpi-card.warn-card{border-color:#E24B4A;border-width:1.5px}
+.kpi-card.ok-card{border-color:#97C459;border-width:1.5px}
+.kpi-dot{position:absolute;top:10px;right:10px;width:7px;height:7px;border-radius:50%}
+.kpi-dot.green{background:#639922}
+.kpi-dot.amber{background:#EF9F27}
+.kpi-dot.red{background:#E24B4A}
+.kpi-lbl{font-size:11px;color:var(--color-text-secondary);margin-bottom:5px;display:flex;align-items:center;gap:5px}
+.kpi-val{font-size:21px;font-weight:500;color:var(--color-text-primary);line-height:1.1}
+.kpi-sub{font-size:11px;margin-top:4px;display:flex;align-items:center;gap:3px}
+.up{color:#3B6D11}.dn{color:#A32D2D}.nt{color:var(--color-text-secondary)}
+.mid-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px}
+.card{background:var(--color-background-primary);border:1px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:14px 16px}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-ttl{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.chtabs{display:flex;gap:2px}
+.chtab{padding:4px 10px;border-radius:var(--border-radius-md);font-size:12px;cursor:pointer;color:var(--color-text-secondary);border:0.5px solid transparent}
+.chtab.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:500;border-color:var(--color-border-tertiary)}
+.charea{height:148px;position:relative}
+.alert-list{display:flex;flex-direction:column;gap:7px}
+.al{padding:9px 11px;border-radius:var(--border-radius-md);border:1px solid;cursor:pointer}
+.al:hover{opacity:.88}
+.al.critical{background:#FCEBEB;border-color:#F09595}
+.al.warning{background:#FAEEDA;border-color:#FAC775}
+.al.info{background:#E6F1FB;border-color:#B5D4F4}
+.al-head{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+.al-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.al-dot.red{background:#E24B4A}
+.al-dot.amber{background:#EF9F27}
+.al-dot.blue{background:#378ADD}
+.al-title{font-size:12px;font-weight:500}
+.al.critical .al-title{color:#791F1F}
+.al.warning .al-title{color:#633806}
+.al.info .al-title{color:#0C447C}
+.al-body{font-size:11.5px;color:var(--color-text-secondary);line-height:1.4;margin-left:14px}
+.cta{display:inline-block;margin-top:5px;margin-left:14px;font-size:11px;font-weight:500;padding:3px 9px;border-radius:var(--border-radius-md);border:0.5px solid;cursor:pointer}
+.al.critical .cta{border-color:#A32D2D;color:#A32D2D}
+.al.warning .cta{border-color:#854F0B;color:#854F0B}
+.al.info .cta{border-color:#185FA5;color:#185FA5}
+.bottom-card{background:var(--color-background-primary);border:1px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:14px 16px}
+.tbl-toolbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap}
+.tbl-toolbar-left{display:flex;flex-direction:column;gap:8px}
+.ttl-row{display:flex;align-items:center;gap:10px}
+.ftabs{display:flex;gap:4px}
+.ftab{padding:4px 11px;border-radius:var(--border-radius-md);font-size:12px;cursor:pointer;border:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary);background:var(--color-background-primary)}
+.ftab.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:500;border-color:var(--color-border-primary)}
+.filter-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px 12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary)}
+.filter-lbl{font-size:11px;font-weight:500;color:var(--color-text-secondary);white-space:nowrap;display:flex;align-items:center;gap:4px}
+.filter-sep{width:0.5px;height:18px;background:var(--color-border-tertiary);margin:0 2px}
+select{font-size:12px;padding:3px 24px 3px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center}
+.search-wrap{position:relative;display:flex;align-items:center}
+.search-wrap i{position:absolute;left:8px;font-size:13px;color:var(--color-text-tertiary);pointer-events:none}
+input[type=text]{font-size:12px;padding:4px 8px 4px 28px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);width:160px}
+.btn-reset{font-size:11px;padding:4px 9px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer;display:flex;align-items:center;gap:4px}
+.btn-reset:hover{background:var(--color-background-secondary)}
+.toolbar-right{display:flex;gap:6px;align-items:center;flex-shrink:0;margin-top:2px}
+.btn-sm{padding:5px 11px;border-radius:var(--border-radius-md);font-size:12px;cursor:pointer;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);display:flex;align-items:center;gap:5px}
+.btn-sm:hover{background:var(--color-background-secondary)}
+.btn-primary{background:#E6F1FB;color:#185FA5;border-color:#85B7EB;font-weight:500}
+.btn-primary:hover{background:#B5D4F4}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+.tbl th{padding:7px 8px;text-align:left;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);font-size:11.5px;white-space:nowrap}
+.tbl td{padding:8px 8px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--color-background-secondary)}
+.pill{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap}
+.s-pending{background:#FAEEDA;color:#854F0B}
+.s-approved{background:#EAF3DE;color:#3B6D11}
+.s-rejected{background:#FCEBEB;color:#A32D2D}
+.t-personal{background:#E6F1FB;color:#185FA5}
+.t-biz{background:#EAF3DE;color:#3B6D11}
+.t-agent{background:#FAEEDA;color:#854F0B}
+.sla-wrap{display:flex;align-items:center;gap:6px}
+.sla-bar{height:4px;border-radius:2px;background:var(--color-background-secondary);overflow:hidden;width:44px;border:0.5px solid var(--color-border-tertiary)}
+.sla-fill{height:100%;border-radius:2px}
+.sla-ok{background:#639922}
+.sla-warn{background:#EF9F27}
+.sla-over{background:#E24B4A}
+.mini-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500}
+.cb{width:13px;height:13px;cursor:pointer;accent-color:#378ADD}
+.result-count{font-size:11.5px;color:var(--color-text-secondary);white-space:nowrap}
+</style>
+
+<div class="dash">
+  <div class="sidebar">
+    <div class="sb-brand"><i class="ti ti-layout-dashboard" aria-hidden="true" style="font-size:16px"></i>Admin Panel</div>
+    <div class="sb-section">Dashboard</div>
+    <div class="sb-item active"><i class="ti ti-home" aria-hidden="true" style="font-size:14px"></i>Tổng quan</div>
+    <div class="sb-section">Xử lý</div>
+    <div class="sb-item"><i class="ti ti-clipboard-check" aria-hidden="true" style="font-size:14px"></i>Duyệt đối tác</div>
+    <div class="sb-item"><i class="ti ti-user-check" aria-hidden="true" style="font-size:14px"></i>Duyệt NCCDV</div>
+    <div class="sb-item"><i class="ti ti-ad" aria-hidden="true" style="font-size:14px"></i>Duyệt quảng cáo</div>
+    <div class="sb-section">Quản lý</div>
+    <div class="sb-item"><i class="ti ti-users" aria-hidden="true" style="font-size:14px"></i>Đối tác</div>
+    <div class="sb-item"><i class="ti ti-building-store" aria-hidden="true" style="font-size:14px"></i>NCCDV</div>
+    <div class="sb-item"><i class="ti ti-shopping-cart" aria-hidden="true" style="font-size:14px"></i>Đơn hàng</div>
+    <div class="sb-section">Tài chính</div>
+    <div class="sb-item"><i class="ti ti-chart-bar" aria-hidden="true" style="font-size:14px"></i>Doanh thu</div>
+    <div class="sb-item"><i class="ti ti-receipt" aria-hidden="true" style="font-size:14px"></i>Đối soát</div>
+    <div class="sb-section">Hỗ trợ</div>
+    <div class="sb-item"><i class="ti ti-message-report" aria-hidden="true" style="font-size:14px"></i>Ticket</div>
+    <div class="sb-item"><i class="ti ti-settings" aria-hidden="true" style="font-size:14px"></i>Cấu hình</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">Tổng quan hệ thống</div>
+      <div class="topbar-right">
+        <span style="font-size:11.5px;color:var(--color-text-secondary)">Thứ hai, 05 tháng 01 năm 2026</span>
+        <span class="badge-alert"><i class="ti ti-bell" aria-hidden="true" style="font-size:12px"></i>3 cảnh báo</span>
+        <div class="av">AD</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="kpi-grid">
+        <div class="kpi-card ok-card">
+          <div class="kpi-dot green"></div>
+          <div class="kpi-lbl"><i class="ti ti-shopping-bag" aria-hidden="true" style="font-size:12px"></i>Đơn hôm nay</div>
+          <div class="kpi-val">1,847</div>
+          <div class="kpi-sub up"><i class="ti ti-arrow-up" aria-hidden="true" style="font-size:11px"></i>+12.4% hôm qua</div>
+        </div>
+        <div class="kpi-card ok-card">
+          <div class="kpi-dot green"></div>
+          <div class="kpi-lbl"><i class="ti ti-coin" aria-hidden="true" style="font-size:12px"></i>Doanh thu hôm nay</div>
+          <div class="kpi-val" style="font-size:17px">₫184.2M</div>
+          <div class="kpi-sub up"><i class="ti ti-arrow-up" aria-hidden="true" style="font-size:11px"></i>+8.1% hôm qua</div>
+        </div>
+        <div class="kpi-card" style="border-color:#FAC775;border-width:1.5px">
+          <div class="kpi-dot amber"></div>
+          <div class="kpi-lbl"><i class="ti ti-loader" aria-hidden="true" style="font-size:12px"></i>Đang xử lý</div>
+          <div class="kpi-val">234</div>
+          <div class="kpi-sub nt">15 đơn >30 phút</div>
+        </div>
+        <div class="kpi-card warn-card">
+          <div class="kpi-dot red"></div>
+          <div class="kpi-lbl"><i class="ti ti-x" aria-hidden="true" style="font-size:12px"></i>Tỷ lệ hủy</div>
+          <div class="kpi-val" style="color:#E24B4A">18.2%</div>
+          <div class="kpi-sub dn"><i class="ti ti-alert-triangle" aria-hidden="true" style="font-size:11px"></i>Ngưỡng: 15%</div>
+        </div>
+        <div class="kpi-card ok-card">
+          <div class="kpi-dot green"></div>
+          <div class="kpi-lbl"><i class="ti ti-wifi" aria-hidden="true" style="font-size:12px"></i>NCCDV online</div>
+          <div class="kpi-val">1,043</div>
+          <div class="kpi-sub nt">87% tổng số</div>
+        </div>
+        <div class="kpi-card" style="border-color:#FAC775;border-width:1.5px">
+          <div class="kpi-dot amber"></div>
+          <div class="kpi-lbl"><i class="ti ti-headset" aria-hidden="true" style="font-size:12px"></i>Ticket mở</div>
+          <div class="kpi-val">47</div>
+          <div class="kpi-sub dn"><i class="ti ti-arrow-up" aria-hidden="true" style="font-size:11px"></i>+9 so hôm qua</div>
+        </div>
+      </div>
+
+      <div class="mid-row">
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-ttl">Đơn hàng theo thời gian thực</div>
+            <div class="chtabs">
+              <div class="chtab active">Hôm nay</div>
+              <div class="chtab">7 ngày</div>
+              <div class="chtab">30 ngày</div>
+            </div>
+          </div>
+          <div class="charea">
+            <svg width="100%" height="148" viewBox="0 0 500 148" preserveAspectRatio="none">
+              <line x1="0" y1="18" x2="500" y2="18" stroke="var(--color-border-tertiary)" stroke-width="0.5"/>
+              <line x1="0" y1="52" x2="500" y2="52" stroke="var(--color-border-tertiary)" stroke-width="0.5"/>
+              <line x1="0" y1="86" x2="500" y2="86" stroke="var(--color-border-tertiary)" stroke-width="0.5"/>
+              <line x1="0" y1="120" x2="500" y2="120" stroke="var(--color-border-tertiary)" stroke-width="0.5"/>
+              <text x="2" y="16" font-size="9.5" fill="var(--color-text-tertiary)" font-family="var(--font-sans)">200</text>
+              <text x="2" y="50" font-size="9.5" fill="var(--color-text-tertiary)" font-family="var(--font-sans)">150</text>
+              <text x="2" y="84" font-size="9.5" fill="var(--color-text-tertiary)" font-family="var(--font-sans)">100</text>
+              <text x="2" y="118" font-size="9.5" fill="var(--color-text-tertiary)" font-family="var(--font-sans)">50</text>
+              <polygon points="22,92 80,76 135,82 190,62 245,56 298,46 352,51 408,36 462,42 492,28 492,120 22,120" fill="#E6F1FB" opacity="0.6"/>
+              <polyline points="22,92 80,76 135,82 190,62 245,56 298,46 352,51 408,36 462,42 492,28" fill="none" stroke="#378ADD" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+              <polygon points="22,102 80,97 135,90 190,94 245,77 298,82 352,72 408,67 462,74 492,62 492,120 22,120" fill="#EAF3DE" opacity="0.5"/>
+              <polyline points="22,102 80,97 135,90 190,94 245,77 298,82 352,72 408,67 462,74 492,62" fill="none" stroke="#639922" stroke-width="1.5" stroke-dasharray="4,3" stroke-linejoin="round" stroke-linecap="round"/>
+              <circle cx="492" cy="28" r="4" fill="#378ADD"/>
+              <circle cx="492" cy="62" r="3.5" fill="#639922"/>
+              <text x="22" y="138" font-size="9.5" fill="var(--color-text-tertiary)" text-anchor="middle" font-family="var(--font-sans)">2h</text>
+              <text x="135" y="138" font-size="9.5" fill="var(--color-text-tertiary)" text-anchor="middle" font-family="var(--font-sans)">6h</text>
+              <text x="245" y="138" font-size="9.5" fill="var(--color-text-tertiary)" text-anchor="middle" font-family="var(--font-sans)">10h</text>
+              <text x="355" y="138" font-size="9.5" fill="var(--color-text-tertiary)" text-anchor="middle" font-family="var(--font-sans)">14h</text>
+              <text x="462" y="138" font-size="9.5" fill="var(--color-text-tertiary)" text-anchor="middle" font-family="var(--font-sans)">18h</text>
+            </svg>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:4px">
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-secondary)"><div style="width:14px;height:2px;background:#378ADD;border-radius:1px"></div>Đơn hàng</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-secondary)"><div style="width:14px;height:0;border-top:1.5px dashed #639922"></div>Doanh thu (M₫)</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-ttl">Cảnh báo hệ thống</div>
+            <span style="font-size:11px;color:var(--color-text-secondary)">3 mục cần xử lý</span>
+          </div>
+          <div class="alert-list">
+            <div class="al critical">
+              <div class="al-head"><div class="al-dot red"></div><div class="al-title">Critical — Payment gateway lỗi</div></div>
+              <div class="al-body">VNPay lỗi 20 phút, 34 đơn bị ảnh hưởng.</div>
+              <span class="cta" onclick="sendPrompt('Xem chi tiết sự cố payment gateway VNPay')">Xem sự cố ↗</span>
+            </div>
+            <div class="al warning">
+              <div class="al-head"><div class="al-dot amber"></div><div class="al-title">Warning — Tỷ lệ hủy vượt ngưỡng</div></div>
+              <div class="al-body">18.2% > ngưỡng 15%. 15 đơn pending >30 phút.</div>
+              <span class="cta" onclick="sendPrompt('Phân tích nguyên nhân tỷ lệ hủy cao hôm nay')">Phân tích ↗</span>
+            </div>
+            <div class="al warning">
+              <div class="al-head"><div class="al-dot amber"></div><div class="al-title">Medium — 5 NCCDV chờ duyệt</div></div>
+              <div class="al-body">Đã chờ >24h, cần phê duyệt trong hôm nay.</div>
+              <span class="cta" onclick="sendPrompt('Mở danh sách NCCDV chờ duyệt')">Duyệt ngay ↗</span>
+            </div>
+            <div class="al info">
+              <div class="al-head"><div class="al-dot blue"></div><div class="al-title">Info — Bảo trì lịch trình</div></div>
+              <div class="al-body">Bảo trì 15/07 lúc 2:00 AM. Thời gian: 2 giờ.</div>
+              <span class="cta">Đã ghi nhận</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-card">
+        <div class="tbl-toolbar">
+          <div class="tbl-toolbar-left">
+            <div class="ttl-row">
+              <div class="card-ttl">Danh sách đối tác gần đây</div>
+              <div class="ftabs" id="ftabs">
+                <div class="ftab active" data-filter="all">Tất cả</div>
+                <div class="ftab" data-filter="pending">Chờ duyệt <span style="background:#FAEEDA;color:#854F0B;padding:1px 6px;border-radius:8px;font-size:10px;margin-left:2px">8</span></div>
+                <div class="ftab" data-filter="approved">Đã duyệt</div>
+                <div class="ftab" data-filter="rejected">Từ chối</div>
+              </div>
+            </div>
+            <div class="filter-row">
+              <div class="filter-lbl"><i class="ti ti-filter" aria-hidden="true" style="font-size:12px"></i>Lọc:</div>
+              <div class="filter-sep"></div>
+              <select id="sel-loai" aria-label="Lọc theo loại">
+                <option value="">Loại đối tác</option>
+                <option value="Cá nhân">Cá nhân</option>
+                <option value="Doanh nghiệp">Doanh nghiệp</option>
+                <option value="Đại lý">Đại lý</option>
+              </select>
+              <select id="sel-kv" aria-label="Lọc theo khu vực">
+                <option value="">Khu vực</option>
+                <option value="Hà Nội">Hà Nội</option>
+                <option value="TP.HCM">TP.HCM</option>
+                <option value="Đà Nẵng">Đà Nẵng</option>
+                <option value="Cần Thơ">Cần Thơ</option>
+              </select>
+              <select id="sel-pt" aria-label="Lọc theo phụ trách">
+                <option value="">Người phụ trách</option>
+                <option value="Trần H.">Trần H.</option>
+                <option value="Nguyễn L.">Nguyễn L.</option>
+                <option value="Phạm Q.">Phạm Q.</option>
+              </select>
+              <select id="sel-sla" aria-label="Lọc theo SLA">
+                <option value="">SLA</option>
+                <option value="ok">Trong hạn</option>
+                <option value="warn">Sắp trễ</option>
+                <option value="over">Quá hạn</option>
+              </select>
+              <div class="filter-sep"></div>
+              <div class="search-wrap">
+                <i class="ti ti-search" aria-hidden="true"></i>
+                <input type="text" id="search-inp" placeholder="Tìm tên, email..." aria-label="Tìm kiếm đối tác">
+              </div>
+              <button class="btn-reset" id="btn-reset" aria-label="Xóa bộ lọc"><i class="ti ti-refresh" aria-hidden="true" style="font-size:12px"></i>Xóa lọc</button>
+              <span class="result-count" id="result-count">Hiển thị 5/5</span>
+            </div>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn-sm"><i class="ti ti-download" aria-hidden="true" style="font-size:13px"></i>Export</button>
+            <button class="btn-sm"><i class="ti ti-user-plus" aria-hidden="true" style="font-size:13px"></i>Assign</button>
+            <button class="btn-sm btn-primary" onclick="sendPrompt('Duyệt tất cả đối tác đang chờ trong danh sách')"><i class="ti ti-check" aria-hidden="true" style="font-size:13px"></i>Duyệt hàng loạt</button>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table class="tbl" id="partner-tbl">
+            <colgroup>
+              <col style="width:30px">
+              <col style="width:120px">
+              <col style="width:145px">
+              <col style="width:90px">
+              <col style="width:75px">
+              <col style="width:80px">
+              <col style="width:90px">
+              <col style="width:95px">
+              <col style="width:85px">
+              <col style="width:80px">
+            </colgroup>
+            <thead>
+              <tr>
+                <th><input type="checkbox" class="cb" id="cb-all" aria-label="Chọn tất cả"></th>
+                <th>Tên đối tác</th>
+                <th>Email</th>
+                <th>Loại</th>
+                <th>Khu vực</th>
+                <th>Ngày gửi</th>
+                <th>SLA</th>
+                <th>Phụ trách</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="tbl-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const partners = [
+  {name:'Nguyễn Văn A',email:'van.a@example.com',loai:'Cá nhân',kv:'Hà Nội',ngay:'01/07/2024',slaH:6,slaType:'ok',pt:'Trần H.',ptInit:'TH',ptColor:'#E6F1FB',ptText:'#185FA5',status:'pending'},
+  {name:'Trần Thị B',email:'thi.b@example.com',loai:'Doanh nghiệp',kv:'TP.HCM',ngay:'29/06/2024',slaH:22,slaType:'warn',pt:'Nguyễn L.',ptInit:'NL',ptColor:'#FAEEDA',ptText:'#854F0B',status:'pending'},
+  {name:'Lê Văn C',email:'van.c@example.com',loai:'Cá nhân',kv:'Đà Nẵng',ngay:'28/06/2024',slaH:36,slaType:'over',pt:'Phạm Q.',ptInit:'PQ',ptColor:'#FCEBEB',ptText:'#A32D2D',status:'pending'},
+  {name:'Phạm Thị D',email:'thi.d@example.com',loai:'Doanh nghiệp',kv:'Hà Nội',ngay:'27/06/2024',slaH:4,slaType:'ok',pt:'Trần H.',ptInit:'TH',ptColor:'#E6F1FB',ptText:'#185FA5',status:'approved'},
+  {name:'Hoàng Văn E',email:'van.e@example.com',loai:'Đại lý',kv:'Cần Thơ',ngay:'26/06/2024',slaH:3,slaType:'ok',pt:'Nguyễn L.',ptInit:'NL',ptColor:'#EAF3DE',ptText:'#3B6D11',status:'rejected'},
+  {name:'Đặng Thị F',email:'thi.f@example.com',loai:'Cá nhân',kv:'TP.HCM',ngay:'25/06/2024',slaH:12,slaType:'warn',pt:'Phạm Q.',ptInit:'PQ',ptColor:'#FAEEDA',ptText:'#854F0B',status:'pending'},
+  {name:'Bùi Văn G',email:'van.g@example.com',loai:'Doanh nghiệp',kv:'Hà Nội',ngay:'24/06/2024',slaH:8,slaType:'ok',pt:'Trần H.',ptInit:'TH',ptColor:'#E6F1FB',ptText:'#185FA5',status:'approved'},
+  {name:'Vũ Thị H',email:'thi.h@example.com',loai:'Đại lý',kv:'Đà Nẵng',ngay:'23/06/2024',slaH:40,slaType:'over',pt:'Nguyễn L.',ptInit:'NL',ptColor:'#FCEBEB',ptText:'#A32D2D',status:'pending'},
+];
+
+const loaiClass={Cá:'t-personal','Doanh':'t-biz','Đại':'t-agent'};
+const statusPill={pending:'<span class="pill s-pending">Chờ duyệt</span>',approved:'<span class="pill s-approved">Đã duyệt</span>',rejected:'<span class="pill s-rejected">Từ chối</span>'};
+const loaiPill={
+  'Cá nhân':'<span class="pill t-personal">Cá nhân</span>',
+  'Doanh nghiệp':'<span class="pill t-biz">Doanh nghiệp</span>',
+  'Đại lý':'<span class="pill t-agent">Đại lý</span>'
+};
+const slaBar=(h,type)=>{
+  const w=type==='ok'?Math.min(h/8*40,40):type==='warn'?Math.min(h/24*70+20,85):100;
+  const cl='sla-fill sla-'+type;
+  const color=type==='ok'?'#3B6D11':type==='warn'?'#854F0B':'#A32D2D';
+  const label=type==='over'?h+'h!':h+'h';
+  return `<div class="sla-wrap"><div class="sla-bar"><div class="${cl}" style="width:${w}%"></div></div><span style="font-size:11px;color:${color}">${label}</span></div>`;
+};
+
+let activeFilter='all';
+function getFilters(){
+  return {
+    loai:document.getElementById('sel-loai').value,
+    kv:document.getElementById('sel-kv').value,
+    pt:document.getElementById('sel-pt').value,
+    sla:document.getElementById('sel-sla').value,
+    q:document.getElementById('search-inp').value.toLowerCase().trim()
+  };
+}
+function renderTable(){
+  const f=getFilters();
+  const filtered=partners.filter(p=>{
+    if(activeFilter!=='all'&&p.status!==activeFilter)return false;
+    if(f.loai&&p.loai!==f.loai)return false;
+    if(f.kv&&p.kv!==f.kv)return false;
+    if(f.pt&&p.pt!==f.pt)return false;
+    if(f.sla&&p.slaType!==f.sla)return false;
+    if(f.q&&!p.name.toLowerCase().includes(f.q)&&!p.email.toLowerCase().includes(f.q))return false;
+    return true;
+  });
+  const tbody=document.getElementById('tbl-body');
+  if(filtered.length===0){
+    tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--color-text-secondary)"><i class="ti ti-search-off" aria-hidden="true" style="font-size:20px;display:block;margin-bottom:6px"></i>Không tìm thấy đối tác phù hợp</td></tr>';
+  }else{
+    tbody.innerHTML=filtered.map(p=>`<tr>
+      <td><input type="checkbox" class="cb" aria-label="Chọn ${p.name}"></td>
+      <td style="font-weight:500">${p.name}</td>
+      <td style="color:var(--color-text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.email}</td>
+      <td>${loaiPill[p.loai]||p.loai}</td>
+      <td style="color:var(--color-text-secondary)">${p.kv}</td>
+      <td style="color:var(--color-text-secondary)">${p.ngay}</td>
+      <td>${slaBar(p.slaH,p.slaType)}</td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div class="mini-av" style="background:${p.ptColor};color:${p.ptText}">${p.ptInit}</div><span style="color:var(--color-text-secondary);font-size:11.5px">${p.pt}</span></div></td>
+      <td>${statusPill[p.status]}</td>
+      <td><button class="btn-sm" onclick="sendPrompt('Xem hồ sơ đối tác ${p.name}')" style="padding:3px 9px;font-size:11px">Xem hồ sơ</button></td>
+    </tr>`).join('');
+  }
+  document.getElementById('result-count').textContent='Hiển thị '+filtered.length+'/'+partners.length;
+}
+
+document.getElementById('ftabs').addEventListener('click',e=>{
+  const t=e.target.closest('.ftab');
+  if(!t)return;
+  document.querySelectorAll('.ftab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  activeFilter=t.dataset.filter;
+  renderTable();
+});
+['sel-loai','sel-kv','sel-pt','sel-sla'].forEach(id=>document.getElementById(id).addEventListener('change',renderTable));
+document.getElementById('search-inp').addEventListener('input',renderTable);
+document.getElementById('btn-reset').addEventListener('click',()=>{
+  ['sel-loai','sel-kv','sel-pt','sel-sla'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('search-inp').value='';
+  renderTable();
+});
+document.getElementById('cb-all').addEventListener('change',function(){
+  document.querySelectorAll('#tbl-body .cb').forEach(cb=>cb.checked=this.checked);
+});
+document.querySelectorAll('.chtab').forEach(t=>t.addEventListener('click',function(){
+  document.querySelectorAll('.chtab').forEach(x=>x.classList.remove('active'));
+  this.classList.add('active');
+}));
+renderTable();
+</script>
