@@ -1,0 +1,383 @@
+
+<h2 class="sr-only">Màn hình chi tiết hồ sơ đối tác dạng side drawer với timeline, risk check, comment, confirm modal và navigation</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:var(--font-sans)}
+.frame{display:flex;height:820px;background:var(--color-background-tertiary);font-size:13px;overflow:hidden}
+.list-panel{width:240px;min-width:240px;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column}
+.lp-hdr{padding:12px 14px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.lp-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px}
+.lp-search{width:100%;padding:5px 9px 5px 28px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-primary);font-size:12px;position:relative}
+.lp-si{position:relative}
+.lp-si i{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--color-text-tertiary);pointer-events:none}
+.lp-items{flex:1;overflow-y:auto}
+.lp-item{padding:10px 14px;cursor:pointer;border-bottom:0.5px solid var(--color-border-tertiary)}
+.lp-item:hover{background:var(--color-background-secondary)}
+.lp-item.active{background:#E6F1FB;border-left:2.5px solid #378ADD}
+.lp-name{font-size:12.5px;font-weight:500;color:var(--color-text-primary);margin-bottom:2px}
+.lp-sub{font-size:11px;color:var(--color-text-tertiary)}
+.lp-badges{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap}
+.s-pending{background:#FAEEDA;color:#854F0B}
+.s-review{background:#E6F1FB;color:#0C447C}
+.s-needmore{background:#FAEEDA;color:#633806;border:0.5px solid #FAC775}
+.s-approved{background:#EAF3DE;color:#27500A}
+.s-rejected{background:#FCEBEB;color:#791F1F}
+.s-resubmit{background:#EEEDFE;color:#3C3489}
+.sla-ok{background:#EAF3DE;color:#3B6D11}
+.sla-warn{background:#FAEEDA;color:#854F0B}
+.sla-over{background:#FCEBEB;color:#A32D2D}
+.drawer{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.drw-topbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
+.drw-nav{display:flex;align-items:center;gap:6px}
+.nav-btn{padding:4px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;color:var(--color-text-secondary);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.nav-btn:hover{background:var(--color-background-secondary)}
+.nav-counter{font-size:12px;color:var(--color-text-tertiary)}
+.drw-status-area{display:flex;align-items:center;gap:8px}
+.status-big{padding:4px 12px;border-radius:var(--border-radius-md);font-size:12px;font-weight:500;border:0.5px solid}
+.drw-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.section-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:13px 14px}
+.card-full{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:13px 14px}
+.sec-title{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.prop-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.prop-thumb{width:40px;height:40px;border-radius:8px;background:#E6F1FB;border:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:center;color:#378ADD;flex-shrink:0}
+.prop-title{font-size:14px;font-weight:500;color:var(--color-text-primary)}
+.prop-type{font-size:11.5px;color:var(--color-text-secondary)}
+.info-row{display:flex;align-items:flex-start;gap:6px;padding:4px 0;font-size:12px}
+.info-row i{font-size:13px;color:var(--color-text-tertiary);margin-top:1px;flex-shrink:0}
+.info-lbl{color:var(--color-text-secondary);min-width:80px;flex-shrink:0}
+.info-val{color:var(--color-text-primary)}
+.risk-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.risk-item{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);font-size:12px}
+.risk-ok{border-color:#C0DD97;background:#EAF3DE}
+.risk-warn{border-color:#FAC775;background:#FAEEDA}
+.risk-err{border-color:#F09595;background:#FCEBEB}
+.risk-icon-ok{color:#3B6D11}
+.risk-icon-warn{color:#854F0B}
+.risk-icon-err{color:#A32D2D}
+.risk-text-ok{color:#27500A}
+.risk-text-warn{color:#633806}
+.risk-text-err{color:#791F1F}
+.photos-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.photo-item{aspect-ratio:4/3;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:4px;color:var(--color-text-tertiary)}
+.photo-item:hover{border-color:var(--color-border-primary);background:var(--color-background-primary)}
+.photo-label{font-size:11px;color:var(--color-text-tertiary)}
+.file-list{display:flex;flex-direction:column;gap:6px}
+.file-card{display:flex;align-items:center;gap:10px;padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary)}
+.file-icon{width:32px;height:32px;border-radius:6px;background:#E6F1FB;display:flex;align-items:center;justify-content:center;color:#185FA5;flex-shrink:0}
+.file-info{flex:1;min-width:0}
+.file-name{font-size:12.5px;font-weight:500;color:var(--color-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-meta{font-size:11px;color:var(--color-text-tertiary)}
+.file-actions{display:flex;gap:5px}
+.icon-btn{padding:5px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;cursor:pointer;color:var(--color-text-secondary);display:flex;align-items:center;justify-content:center;font-size:14px}
+.icon-btn:hover{background:var(--color-background-primary)}
+.timeline-list{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:10px;padding:7px 0;position:relative}
+.tl-item:not(:last-child)::after{content:'';position:absolute;left:7px;top:22px;bottom:-7px;width:0.5px;background:var(--color-border-secondary)}
+.tl-dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--color-background-primary);flex-shrink:0;margin-top:2px;position:relative;z-index:1}
+.tl-dot-blue{background:#378ADD}
+.tl-dot-green{background:#639922}
+.tl-dot-amber{background:#EF9F27}
+.tl-dot-gray{background:#B4B2A9}
+.tl-content{flex:1;min-width:0}
+.tl-action{font-size:12.5px;font-weight:500;color:var(--color-text-primary)}
+.tl-meta{font-size:11px;color:var(--color-text-tertiary);margin-top:1px}
+.comment-area{display:flex;flex-direction:column;gap:8px}
+.comment-label{font-size:12px;font-weight:500;color:var(--color-text-secondary)}
+textarea{width:100%;padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-size:12.5px;resize:vertical;min-height:70px;font-family:var(--font-sans);line-height:1.5}
+textarea:focus{outline:none;border-color:#378ADD}
+.sticky-bar{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-secondary);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
+.sticky-left{display:flex;align-items:center;gap:6px}
+.btn-reject{padding:7px 16px;border-radius:var(--border-radius-md);border:0.5px solid #A32D2D;background:#FCEBEB;color:#791F1F;font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-reject:hover{background:#F7C1C1}
+.btn-more{padding:7px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-more:hover{background:var(--color-background-secondary)}
+.btn-approve{padding:7px 18px;border-radius:var(--border-radius-md);border:0.5px solid #3B6D11;background:#EAF3DE;color:#27500A;font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-approve:hover{background:#C0DD97}
+.sticky-right{display:flex;align-items:center;gap:6px}
+.conf-wrap{display:none;position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:20;align-items:center;justify-content:center}
+.conf-wrap.show{display:flex}
+.conf-box{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:20px;width:340px}
+.conf-icon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:20px}
+.conf-icon-approve{background:#EAF3DE;color:#27500A}
+.conf-icon-reject{background:#FCEBEB;color:#791F1F}
+.conf-icon-more{background:#FAEEDA;color:#633806}
+.conf-title{font-size:14px;font-weight:500;color:var(--color-text-primary);text-align:center;margin-bottom:4px}
+.conf-sub{font-size:12px;color:var(--color-text-secondary);text-align:center;margin-bottom:16px;line-height:1.5}
+.conf-comment{margin-bottom:12px}
+.conf-actions{display:flex;gap:8px}
+.conf-cancel{flex:1;padding:7px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);font-size:12.5px;cursor:pointer}
+.conf-confirm{flex:1;padding:7px;border-radius:var(--border-radius-md);font-size:12.5px;font-weight:500;cursor:pointer;border:0.5px solid}
+</style>
+
+<div class="frame" style="position:relative">
+  <div class="list-panel">
+    <div class="lp-hdr">
+      <div class="lp-title">Hồ sơ chờ duyệt <span style="background:#FAEEDA;color:#854F0B;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:500;margin-left:4px">5</span></div>
+      <div class="lp-si" style="margin-top:6px">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <input type="text" class="lp-search" placeholder="Tìm hồ sơ..." aria-label="Tìm hồ sơ">
+      </div>
+    </div>
+    <div class="lp-items" id="lp-items"></div>
+  </div>
+
+  <div class="drawer">
+    <div class="drw-topbar">
+      <div class="drw-nav">
+        <button class="nav-btn" id="btn-prev" aria-label="Hồ sơ trước"><i class="ti ti-arrow-left" aria-hidden="true" style="font-size:13px"></i>Trước</button>
+        <span class="nav-counter" id="nav-counter">1 / 5</span>
+        <button class="nav-btn" id="btn-next" aria-label="Hồ sơ tiếp theo">Tiếp<i class="ti ti-arrow-right" aria-hidden="true" style="font-size:13px"></i></button>
+      </div>
+      <div class="drw-status-area" id="status-area"></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="nav-btn"><i class="ti ti-external-link" aria-hidden="true" style="font-size:13px"></i>Mở trang đầy đủ</button>
+        <button class="nav-btn"><i class="ti ti-copy" aria-hidden="true" style="font-size:13px"></i>Copy link</button>
+      </div>
+    </div>
+
+    <div class="drw-body" id="drw-body"></div>
+
+    <div class="sticky-bar">
+      <div class="sticky-left">
+        <button class="btn-reject" id="btn-reject-main"><i class="ti ti-x" aria-hidden="true" style="font-size:13px"></i>Từ chối</button>
+        <button class="btn-more" id="btn-more-main"><i class="ti ti-mail" aria-hidden="true" style="font-size:13px"></i>Yêu cầu bổ sung</button>
+      </div>
+      <div class="sticky-right">
+        <button class="btn-approve" id="btn-approve-main"><i class="ti ti-check" aria-hidden="true" style="font-size:13px"></i>Duyệt hồ sơ</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="conf-wrap" id="conf-wrap">
+    <div class="conf-box">
+      <div class="conf-icon" id="conf-icon"><i id="conf-icon-i" class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="conf-title" id="conf-title">Xác nhận duyệt hồ sơ?</div>
+      <div class="conf-sub" id="conf-sub">Hành động này sẽ chuyển trạng thái hồ sơ sang Approved và thông báo đến đối tác.</div>
+      <div class="conf-comment" id="conf-comment-wrap" style="display:none">
+        <textarea id="conf-textarea" placeholder="Nhập lý do (bắt buộc)..." rows="3"></textarea>
+      </div>
+      <div class="conf-actions">
+        <button class="conf-cancel" id="conf-cancel">Huỷ</button>
+        <button class="conf-confirm" id="conf-confirm">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const RECORDS=[
+  {id:1,name:'Capital Place',type:'Chung cư',addr:'29 Liễu Giai, Ba Đình, HN',agent:'Nguyễn Văn A',phone:'09123123123',email:'nva@gmail.com',tax:'031xxxxxxx',legal:'Cty CP Twin Peaks',legalAddr:'Quận 5, TP.HCM',founded:'12/06/2018',units:480,residents:1200,status:'pending',sla:'over',slaH:52,risk:{email:true,phone:true,dup:false,black:false},docs:[{name:'Giấy phép kinh doanh.pdf',size:'2.4 MB',type:'PDF',time:'2 giờ trước'},{name:'Giấy tờ sở hữu.pdf',size:'1.1 MB',type:'PDF',time:'2 giờ trước'},{name:'CCCD đại diện.jpg',size:'845 KB',type:'JPG',time:'2 giờ trước'}],timeline:[{dot:'blue',action:'Hồ sơ được tạo và nộp','time':'02/02 10:00'},{dot:'green',action:'Upload 3 tài liệu đính kèm','time':'02/02 10:05'},{dot:'amber',action:'Admin mở xem hồ sơ','time':'02/02 11:00'},{dot:'gray',action:'Chờ phê duyệt','time':'Hiện tại'}]},
+  {id:2,name:'Toà nhà HH1',type:'Chung cư',addr:'99 P.Dương Đình Nghệ, Cầu Giấy, HN',agent:'Trần Thị B',phone:'09887766554',email:'ttb@gmail.com',tax:'032xxxxxxx',legal:'Cty TNHH HH Group',legalAddr:'Quận 1, TP.HCM',founded:'03/11/2015',units:320,residents:800,status:'review',sla:'warn',slaH:26,risk:{email:true,phone:true,dup:true,black:false},docs:[{name:'Giấy phép kinh doanh.pdf',size:'3.2 MB',type:'PDF',time:'5 giờ trước'},{name:'Sơ đồ tầng.pdf',size:'5.8 MB',type:'PDF',time:'5 giờ trước'}],timeline:[{dot:'blue',action:'Hồ sơ được tạo','time':'02/02 06:00'},{dot:'green',action:'Upload 2 tài liệu','time':'02/02 06:10'},{dot:'blue',action:'Đang được xem xét','time':'02/02 07:30'}]},
+  {id:3,name:'Grand Hotel Hanoi',type:'Hotel',addr:'78 Trần Nhân Tông, HBT, HN',agent:'Lê Văn C',phone:'09111222333',email:'lvc@hotel.vn',tax:'033xxxxxxx',legal:'Cty CP GH Hanoi',legalAddr:'Ba Đình, Hà Nội',founded:'01/04/2010',units:200,residents:0,status:'needmore',sla:'warn',slaH:30,risk:{email:true,phone:false,dup:false,black:false},docs:[{name:'Giấy phép KD.pdf',size:'1.8 MB',type:'PDF',time:'1 ngày trước'}],timeline:[{dot:'blue',action:'Hồ sơ được tạo','time':'01/02 14:00'},{dot:'amber',action:'Yêu cầu bổ sung giấy tờ','time':'01/02 16:00'},{dot:'gray',action:'Chờ đối tác bổ sung','time':'Hiện tại'}]},
+  {id:4,name:'Nhà máy Thành Công',type:'Nhà máy',addr:'KCN Thăng Long, Đông Anh, HN',agent:'Phạm Thị D',phone:'09444555666',email:'ptd@tc.vn',tax:'034xxxxxxx',legal:'Cty TNHH TC',legalAddr:'Quận 7, TP.HCM',founded:'15/07/2008',units:0,residents:500,status:'resubmit',sla:'ok',slaH:8,risk:{email:true,phone:true,dup:false,black:false},docs:[{name:'Giấy phép KD.pdf',size:'2.1 MB',type:'PDF',time:'3 giờ trước'},{name:'Giấy phép XD.pdf',size:'4.5 MB',type:'PDF',time:'3 giờ trước'},{name:'PCCC chứng nhận.pdf',size:'1.3 MB',type:'PDF',time:'3 giờ trước'}],timeline:[{dot:'blue',action:'Hồ sơ được tạo','time':'02/02 02:00'},{dot:'amber',action:'Yêu cầu bổ sung trước đó','time':'01/02 09:00'},{dot:'green',action:'Đối tác nộp bổ sung','time':'02/02 02:00'},{dot:'blue',action:'Chờ xét duyệt lại','time':'Hiện tại'}]},
+  {id:5,name:'Vinhomes Smart City',type:'Chung cư',addr:'Tây Mỗ, Nam Từ Liêm, HN',agent:'Hoàng Văn E',phone:'09222333444',email:'hve@vin.vn',tax:'035xxxxxxx',legal:'Cty CP Vinhomes',legalAddr:'Cầu Giấy, Hà Nội',founded:'20/01/2019',units:9000,residents:22000,status:'pending',sla:'ok',slaH:4,risk:{email:true,phone:true,dup:false,black:false},docs:[{name:'Giấy phép kinh doanh.pdf',size:'2.9 MB',type:'PDF',time:'30 phút trước'},{name:'Giấy tờ sở hữu.pdf',size:'3.4 MB',type:'PDF',time:'30 phút trước'}],timeline:[{dot:'blue',action:'Hồ sơ được tạo','time':'02/02 16:00'},{dot:'green',action:'Upload tài liệu đầy đủ','time':'02/02 16:05'},{dot:'gray',action:'Chờ phê duyệt','time':'Hiện tại'}]},
+];
+
+const STATUS_META={
+  pending:{label:'Pending',cls:'s-pending',confColor:'#27500A',confBg:'#EAF3DE',confBorder:'#3B6D11'},
+  review:{label:'Under Review',cls:'s-review',confColor:'#0C447C',confBg:'#E6F1FB',confBorder:'#185FA5'},
+  needmore:{label:'Need More Info',cls:'s-needmore',confColor:'#633806',confBg:'#FAEEDA',confBorder:'#854F0B'},
+  resubmit:{label:'Resubmitted',cls:'s-resubmit',confColor:'#3C3489',confBg:'#EEEDFE',confBorder:'#534AB7'},
+  approved:{label:'Approved',cls:'s-approved',confColor:'#27500A',confBg:'#EAF3DE',confBorder:'#3B6D11'},
+  rejected:{label:'Rejected',cls:'s-rejected',confColor:'#791F1F',confBg:'#FCEBEB',confBorder:'#A32D2D'},
+};
+const SLA_META={ok:{cls:'sla-ok',label:'SLA ok'},warn:{cls:'sla-warn',label:'Sắp trễ'},over:{cls:'sla-over',label:'Quá hạn'}};
+const DOT_COLOR={blue:'tl-dot-blue',green:'tl-dot-green',amber:'tl-dot-amber',gray:'tl-dot-gray'};
+
+let cur=0;
+let confAction=null;
+
+function renderList(){
+  const el=document.getElementById('lp-items');
+  el.innerHTML=RECORDS.map((r,i)=>{
+    const sm=STATUS_META[r.status];
+    const sl=SLA_META[r.sla];
+    return`<div class="lp-item ${i===cur?'active':''}" data-idx="${i}">
+      <div class="lp-name">${r.name}</div>
+      <div class="lp-sub">${r.type} · ${r.slaH}h</div>
+      <div class="lp-badges"><span class="pill ${sm.cls}">${sm.label}</span><span class="pill ${sl.cls}">${sl.label}</span></div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.lp-item').forEach(el=>el.addEventListener('click',function(){
+    cur=+this.dataset.idx;
+    renderAll();
+  }));
+}
+
+function renderDetail(){
+  const r=RECORDS[cur];
+  const sm=STATUS_META[r.status];
+  const sl=SLA_META[r.sla];
+  document.getElementById('nav-counter').textContent=(cur+1)+' / '+RECORDS.length;
+  document.getElementById('status-area').innerHTML=`
+    <span class="status-big ${sm.cls}" style="font-size:13px">${sm.label}</span>
+    <span class="pill ${sl.cls}">${sl.label} — ${r.slaH}h</span>`;
+
+  const riskItems=[
+    {ok:r.risk.email,icon_ok:'ti-circle-check',icon_err:'ti-circle-x',ok_cls:'risk-ok',err_cls:'risk-err',ok_txt:'risk-text-ok',err_txt:'risk-text-err',ok_icon:'risk-icon-ok',err_icon:'risk-icon-err',label:r.risk.email?'Email đã xác minh':'Email chưa xác minh'},
+    {ok:r.risk.phone,icon_ok:'ti-circle-check',icon_err:'ti-circle-x',ok_cls:'risk-ok',err_cls:'risk-err',ok_txt:'risk-text-ok',err_txt:'risk-text-err',ok_icon:'risk-icon-ok',err_icon:'risk-icon-err',label:r.risk.phone?'SĐT đã xác minh':'SĐT chưa xác minh'},
+    {ok:!r.risk.dup,icon_ok:'ti-circle-check',icon_err:'ti-alert-circle',ok_cls:'risk-ok',err_cls:'risk-warn',ok_txt:'risk-text-ok',err_txt:'risk-text-warn',ok_icon:'risk-icon-ok',err_icon:'risk-icon-warn',label:r.risk.dup?'Trùng công ty khác':'Không trùng hồ sơ'},
+    {ok:!r.risk.black,icon_ok:'ti-shield-check',icon_err:'ti-shield-x',ok_cls:'risk-ok',err_cls:'risk-err',ok_txt:'risk-text-ok',err_txt:'risk-text-err',ok_icon:'risk-icon-ok',err_icon:'risk-icon-err',label:r.risk.black?'Nằm trong blacklist':'Không trong blacklist'},
+  ];
+
+  document.getElementById('drw-body').innerHTML=`
+  <div class="section-grid">
+    <div class="card">
+      <div class="sec-title">Thông tin chung</div>
+      <div class="prop-head">
+        <div class="prop-thumb"><i class="ti ti-building" aria-hidden="true" style="font-size:18px"></i></div>
+        <div><div class="prop-title">${r.name}</div><div class="prop-type">${r.type}</div></div>
+      </div>
+      <div class="info-row"><i class="ti ti-map-pin" aria-hidden="true"></i><span class="info-val">${r.addr}</span></div>
+      <div class="info-row"><i class="ti ti-phone" aria-hidden="true"></i><span class="info-val">${r.phone}</span></div>
+      <div style="border-top:0.5px solid var(--color-border-tertiary);margin:10px 0 8px"></div>
+      <div class="sec-title">Người quản lý</div>
+      <div class="info-row"><i class="ti ti-user" aria-hidden="true"></i><span class="info-lbl">Họ tên:</span><span class="info-val">${r.agent}</span></div>
+      <div class="info-row"><i class="ti ti-mail" aria-hidden="true"></i><span class="info-lbl">Email:</span><span class="info-val" style="color:#185FA5">${r.email}</span></div>
+      <div class="info-row"><i class="ti ti-phone" aria-hidden="true"></i><span class="info-lbl">SĐT:</span><span class="info-val">${r.phone}</span></div>
+    </div>
+    <div class="card">
+      <div class="sec-title">Thông tin pháp lý</div>
+      <div class="info-row"><i class="ti ti-building-bank" aria-hidden="true"></i><span class="info-lbl">Tên pháp lý:</span><span class="info-val">${r.legal}</span></div>
+      <div class="info-row"><i class="ti ti-user" aria-hidden="true"></i><span class="info-lbl">Đại diện:</span><span class="info-val">${r.agent}</span></div>
+      <div class="info-row"><i class="ti ti-file-text" aria-hidden="true"></i><span class="info-lbl">Mã số thuế:</span><span class="info-val">${r.tax}</span></div>
+      <div class="info-row"><i class="ti ti-map" aria-hidden="true"></i><span class="info-lbl">Địa chỉ ĐK:</span><span class="info-val">${r.legalAddr}</span></div>
+      <div class="info-row"><i class="ti ti-calendar" aria-hidden="true"></i><span class="info-lbl">Thành lập:</span><span class="info-val">${r.founded}</span></div>
+      <div style="border-top:0.5px solid var(--color-border-tertiary);margin:10px 0 8px"></div>
+      <div class="sec-title">Thông số quy mô</div>
+      <div style="display:flex;gap:14px">
+        ${r.units?`<div><div style="font-size:20px;font-weight:500;color:var(--color-text-primary)">${r.units.toLocaleString()}</div><div style="font-size:11px;color:var(--color-text-secondary)">căn hộ/phòng</div></div>`:''}
+        ${r.residents?`<div><div style="font-size:20px;font-weight:500;color:var(--color-text-primary)">~${r.residents.toLocaleString()}</div><div style="font-size:11px;color:var(--color-text-secondary)">cư dân</div></div>`:''}
+      </div>
+    </div>
+  </div>
+
+  <div class="card-full">
+    <div class="sec-title">Risk & compliance</div>
+    <div class="risk-grid">
+      ${riskItems.map(ri=>`
+        <div class="risk-item ${ri.ok?ri.ok_cls:ri.err_cls}">
+          <i class="ti ${ri.ok?ri.icon_ok:ri.icon_err} ${ri.ok?ri.ok_icon:ri.err_icon}" aria-hidden="true" style="font-size:15px"></i>
+          <span class="${ri.ok?ri.ok_txt:ri.err_txt}" style="font-size:12px">${ri.label}</span>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="section-grid">
+    <div class="card">
+      <div class="sec-title">Hình ảnh địa điểm</div>
+      <div class="photos-row">
+        <div class="photo-item" onclick="sendPrompt('Mở fullscreen ảnh mặt tiền của ${r.name}')"><i class="ti ti-photo" aria-hidden="true" style="font-size:20px"></i><span class="photo-label">Mặt tiền</span></div>
+        <div class="photo-item" onclick="sendPrompt('Mở fullscreen ảnh sảnh của ${r.name}')"><i class="ti ti-photo" aria-hidden="true" style="font-size:20px"></i><span class="photo-label">Sảnh</span></div>
+        <div class="photo-item" onclick="sendPrompt('Mở fullscreen ảnh toàn cảnh của ${r.name}')"><i class="ti ti-photo" aria-hidden="true" style="font-size:20px"></i><span class="photo-label">Toàn cảnh</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-title">Tài liệu đính kèm</div>
+      <div class="file-list">
+        ${r.docs.map(d=>`
+          <div class="file-card">
+            <div class="file-icon"><i class="ti ti-file-text" aria-hidden="true" style="font-size:15px"></i></div>
+            <div class="file-info">
+              <div class="file-name">${d.name}</div>
+              <div class="file-meta">${d.type} · ${d.size} · ${d.time}</div>
+            </div>
+            <div class="file-actions">
+              <button class="icon-btn" aria-label="Xem ${d.name}"><i class="ti ti-eye" aria-hidden="true"></i></button>
+              <button class="icon-btn" aria-label="Tải ${d.name}"><i class="ti ti-download" aria-hidden="true"></i></button>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="section-grid">
+    <div class="card">
+      <div class="sec-title">Timeline xử lý</div>
+      <div class="timeline-list">
+        ${r.timeline.map(tl=>`
+          <div class="tl-item">
+            <div class="tl-dot ${DOT_COLOR[tl.dot]}"></div>
+            <div class="tl-content">
+              <div class="tl-action">${tl.action}</div>
+              <div class="tl-meta">${tl.time}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-title">Ghi chú / Comment</div>
+      <div class="comment-area">
+        <div class="comment-label">Lý do / ghi chú nội bộ</div>
+        <textarea id="main-comment" placeholder="Nhập ghi chú, lý do từ chối, hoặc yêu cầu bổ sung..." rows="4"></textarea>
+        <div style="font-size:11px;color:var(--color-text-tertiary)">Ghi chú này sẽ được lưu vào timeline và gửi đến đối tác nếu chọn từ chối hoặc yêu cầu bổ sung.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderAll(){
+  renderList();
+  renderDetail();
+}
+
+let confType=null;
+function openConf(type){
+  confType=type;
+  const wrap=document.getElementById('conf-wrap');
+  const icon=document.getElementById('conf-icon');
+  const iconI=document.getElementById('conf-icon-i');
+  const title=document.getElementById('conf-title');
+  const sub=document.getElementById('conf-sub');
+  const commentWrap=document.getElementById('conf-comment-wrap');
+  const confirmBtn=document.getElementById('conf-confirm');
+  if(type==='approve'){
+    icon.className='conf-icon conf-icon-approve';
+    iconI.className='ti ti-check';
+    title.textContent='Xác nhận duyệt hồ sơ?';
+    sub.textContent='Hành động này sẽ chuyển trạng thái sang Approved và thông báo đến đối tác.';
+    commentWrap.style.display='none';
+    confirmBtn.style.background='#EAF3DE';confirmBtn.style.color='#27500A';confirmBtn.style.borderColor='#3B6D11';
+    confirmBtn.textContent='Duyệt hồ sơ';
+  } else if(type==='reject'){
+    icon.className='conf-icon conf-icon-reject';
+    iconI.className='ti ti-x';
+    title.textContent='Từ chối hồ sơ này?';
+    sub.textContent='Hãy nhập lý do từ chối — thông tin này sẽ được gửi đến đối tác qua email.';
+    commentWrap.style.display='block';
+    document.getElementById('conf-textarea').placeholder='Nhập lý do từ chối (bắt buộc)...';
+    confirmBtn.style.background='#FCEBEB';confirmBtn.style.color='#791F1F';confirmBtn.style.borderColor='#A32D2D';
+    confirmBtn.textContent='Từ chối hồ sơ';
+  } else {
+    icon.className='conf-icon conf-icon-more';
+    iconI.className='ti ti-mail';
+    title.textContent='Yêu cầu bổ sung tài liệu?';
+    sub.textContent='Nhập nội dung yêu cầu — đối tác sẽ nhận email và có thể nộp bổ sung.';
+    commentWrap.style.display='block';
+    document.getElementById('conf-textarea').placeholder='Ví dụ: Vui lòng bổ sung giấy phép PCCC...';
+    confirmBtn.style.background='#FAEEDA';confirmBtn.style.color='#633806';confirmBtn.style.borderColor='#854F0B';
+    confirmBtn.textContent='Gửi yêu cầu';
+  }
+  wrap.classList.add('show');
+}
+
+document.getElementById('conf-cancel').addEventListener('click',()=>document.getElementById('conf-wrap').classList.remove('show'));
+document.getElementById('conf-wrap').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show')});
+document.getElementById('conf-confirm').addEventListener('click',()=>{
+  const r=RECORDS[cur];
+  if(confType==='approve')r.status='approved';
+  else if(confType==='reject')r.status='rejected';
+  else r.status='needmore';
+  document.getElementById('conf-wrap').classList.remove('show');
+  renderAll();
+});
+
+document.getElementById('btn-approve-main').addEventListener('click',()=>openConf('approve'));
+document.getElementById('btn-reject-main').addEventListener('click',()=>openConf('reject'));
+document.getElementById('btn-more-main').addEventListener('click',()=>openConf('more'));
+document.getElementById('btn-prev').addEventListener('click',()=>{if(cur>0){cur--;renderAll();}});
+document.getElementById('btn-next').addEventListener('click',()=>{if(cur<RECORDS.length-1){cur++;renderAll();}});
+
+renderAll();
+</script>
