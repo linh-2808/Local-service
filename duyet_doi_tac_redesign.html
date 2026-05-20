@@ -1,0 +1,437 @@
+
+<h2 class="sr-only">Màn hình duyệt đối tác tham gia với bảng compact, bộ lọc, SLA indicator, bulk action và side drawer preview</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:var(--font-sans)}
+.page{display:flex;min-height:700px;background:var(--color-background-tertiary);font-size:13px}
+.sb{width:188px;min-width:188px;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column;padding:0}
+.sb-top{padding:12px 14px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:8px}
+.sb-logo{width:30px;height:30px;border-radius:6px;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:#185FA5}
+.sb-name{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.sb-sub{font-size:10.5px;color:var(--color-text-tertiary)}
+.sb-sec{padding:10px 14px 3px;font-size:10px;font-weight:500;color:var(--color-text-tertiary);letter-spacing:.5px;text-transform:uppercase}
+.sb-item{padding:5px 12px;margin:1px 5px;border-radius:var(--border-radius-md);color:var(--color-text-secondary);cursor:pointer;display:flex;align-items:center;gap:7px;font-size:12.5px}
+.sb-item:hover{background:var(--color-background-secondary)}
+.sb-item.active{background:#E6F1FB;color:#185FA5;font-weight:500}
+.sb-item.sub{padding-left:28px;font-size:12px}
+.sb-item.sub.cur{background:#EAF3DE;color:#3B6D11;font-weight:500}
+.badge-n{background:#FAEEDA;color:#854F0B;font-size:10px;padding:1px 5px;border-radius:8px;font-weight:500;margin-left:auto}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:9px 18px;display:flex;align-items:center;justify-content:space-between}
+.tb-l{font-size:14px;font-weight:500;color:var(--color-text-primary)}
+.tb-r{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--color-text-secondary)}
+.av{width:28px;height:28px;border-radius:50%;background:#E24B4A;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#fff}
+.content{padding:14px 18px;flex:1;display:flex;flex-direction:column;gap:12px}
+.pg-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pg-title{font-size:16px;font-weight:500;color:var(--color-text-primary)}
+.pending-badge{background:#FAEEDA;color:#854F0B;font-size:12px;padding:3px 10px;border-radius:10px;font-weight:500;border:0.5px solid #FAC775}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.search-w{position:relative;display:flex;align-items:center;flex:1;min-width:180px;max-width:260px}
+.search-w i{position:absolute;left:9px;font-size:13px;color:var(--color-text-tertiary);pointer-events:none}
+input[type=text]{width:100%;padding:6px 9px 6px 30px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-size:12px}
+select{padding:5px 24px 5px 9px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-size:12px;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center}
+.sort-btn{padding:5px 11px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-secondary);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px}
+.sort-btn:hover{background:var(--color-background-secondary)}
+.bulk-bar{background:#E6F1FB;border:0.5px solid #85B7EB;border-radius:var(--border-radius-md);padding:7px 12px;display:flex;align-items:center;gap:10px;font-size:12px;color:#0C447C}
+.bulk-bar.hidden{display:none}
+.btn-approve-bulk{padding:4px 12px;border-radius:var(--border-radius-md);border:0.5px solid #3B6D11;background:#EAF3DE;color:#27500A;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:4px}
+.btn-reject-bulk{padding:4px 12px;border-radius:var(--border-radius-md);border:0.5px solid #A32D2D;background:#FCEBEB;color:#791F1F;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:4px}
+.tbl-wrap{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);overflow:hidden}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}
+colgroup col{}
+th{padding:7px 10px;text-align:left;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);font-size:11.5px;white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--color-text-primary)}
+th .sort-icon{font-size:11px;margin-left:3px;opacity:.5}
+td{padding:7px 10px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--color-background-secondary)}
+tr.selected td{background:#EAF3DE}
+.prop-thumb{width:34px;height:34px;border-radius:6px;background:#F1EFE8;border:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:center;color:var(--color-text-tertiary);flex-shrink:0;overflow:hidden}
+.prop-name{font-weight:500;font-size:12.5px;color:var(--color-text-primary);line-height:1.2}
+.prop-addr{font-size:11px;color:var(--color-text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.pill{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;gap:3px}
+.t-chungcu{background:#E6F1FB;color:#0C447C}
+.t-hotel{background:#EEEDFE;color:#3C3489}
+.t-nhamay{background:#FAEEDA;color:#633806}
+.t-office{background:#EAF3DE;color:#27500A}
+.s-pending{background:#FAEEDA;color:#854F0B}
+.s-review{background:#E6F1FB;color:#0C447C}
+.s-needmore{background:#FAEEDA;color:#633806;border:0.5px solid #FAC775}
+.s-approved{background:#EAF3DE;color:#27500A}
+.s-rejected{background:#FCEBEB;color:#791F1F}
+.sla-wrap{display:flex;align-items:center;gap:5px}
+.sla-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sla-ok{background:#639922}
+.sla-warn{background:#EF9F27}
+.sla-over{background:#E24B4A}
+.sla-text{font-size:11px}
+.sla-text.ok{color:#3B6D11}
+.sla-text.warn{color:#854F0B}
+.sla-text.over{color:#A32D2D;font-weight:500}
+.btn-approve{padding:4px 10px;border-radius:var(--border-radius-md);border:0.5px solid #3B6D11;background:#EAF3DE;color:#27500A;font-size:11.5px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.btn-approve:hover{background:#C0DD97}
+.btn-reject{padding:4px 10px;border-radius:var(--border-radius-md);border:0.5px solid #A32D2D;background:#FCEBEB;color:#791F1F;font-size:11.5px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.btn-reject:hover{background:#F7C1C1}
+.btn-preview{padding:4px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);font-size:11.5px;cursor:pointer;display:inline-flex;align-items:center;gap:3px}
+.btn-preview:hover{background:var(--color-background-secondary)}
+.action-cell{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}
+.cb{width:13px;height:13px;cursor:pointer;accent-color:#378ADD}
+.drawer-overlay{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.25);z-index:10}
+.drawer-overlay.open{display:block}
+.drawer{position:absolute;top:0;right:0;width:320px;height:100%;background:var(--color-background-primary);border-left:0.5px solid var(--color-border-secondary);z-index:11;display:flex;flex-direction:column}
+.drawer-hdr{padding:14px 16px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between}
+.drawer-title{font-size:14px;font-weight:500;color:var(--color-text-primary)}
+.drawer-close{padding:4px 6px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;cursor:pointer;color:var(--color-text-secondary);font-size:13px;display:flex;align-items:center}
+.drawer-body{padding:16px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.drawer-img{width:100%;height:120px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:center;color:var(--color-text-tertiary);font-size:13px;gap:6px}
+.drawer-section{display:flex;flex-direction:column;gap:6px}
+.drawer-sec-title{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.5px}
+.drawer-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px}
+.drawer-row:last-child{border-bottom:none}
+.drawer-lbl{color:var(--color-text-secondary)}
+.drawer-val{color:var(--color-text-primary);font-weight:500;text-align:right}
+.drawer-actions{padding:12px 16px;border-top:0.5px solid var(--color-border-tertiary);display:flex;gap:8px}
+.drawer-approve{flex:1;padding:8px;border-radius:var(--border-radius-md);border:0.5px solid #3B6D11;background:#EAF3DE;color:#27500A;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.drawer-reject{flex:1;padding:8px;border-radius:var(--border-radius-md);border:0.5px solid #A32D2D;background:#FCEBEB;color:#791F1F;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.relative{position:relative}
+.docs-list{display:flex;flex-direction:column;gap:4px}
+.doc-item{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);font-size:12px;color:var(--color-text-secondary)}
+.doc-ok{color:#3B6D11}
+.doc-miss{color:#A32D2D}
+</style>
+
+<div class="page">
+  <div class="sb">
+    <div class="sb-top">
+      <div class="sb-logo"><i class="ti ti-building" aria-hidden="true" style="font-size:14px"></i></div>
+      <div><div class="sb-name">Local Services</div><div class="sb-sub">Admin portal</div></div>
+    </div>
+    <div class="sb-sec">Chính</div>
+    <div class="sb-item"><i class="ti ti-home" aria-hidden="true" style="font-size:14px"></i>Tổng quan</div>
+    <div class="sb-item active"><i class="ti ti-clipboard-list" aria-hidden="true" style="font-size:14px"></i>Xử lý yêu cầu</div>
+    <div class="sb-item sub cur"><i class="ti ti-point" aria-hidden="true" style="font-size:10px"></i>Duyệt đối tác <span class="badge-n">3</span></div>
+    <div class="sb-item sub"><i class="ti ti-point" aria-hidden="true" style="font-size:10px"></i>Ngừng hợp tác</div>
+    <div class="sb-item sub"><i class="ti ti-point" aria-hidden="true" style="font-size:10px"></i>Duyệt quảng cáo</div>
+    <div class="sb-sec">Quản lý</div>
+    <div class="sb-item"><i class="ti ti-users" aria-hidden="true" style="font-size:14px"></i>Quản lý đối tác</div>
+    <div class="sb-item"><i class="ti ti-building-store" aria-hidden="true" style="font-size:14px"></i>Quản lý NCCDV</div>
+    <div class="sb-item"><i class="ti ti-shopping-bag" aria-hidden="true" style="font-size:14px"></i>Quản lý đơn hàng</div>
+    <div class="sb-item"><i class="ti ti-chart-bar" aria-hidden="true" style="font-size:14px"></i>Tài chính</div>
+    <div class="sb-item"><i class="ti ti-headset" aria-hidden="true" style="font-size:14px"></i>Khiếu nại & hỗ trợ</div>
+    <div class="sb-item"><i class="ti ti-settings" aria-hidden="true" style="font-size:14px"></i>Cấu hình</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tb-l">Duyệt đối tác tham gia</div>
+      <div class="tb-r"><i class="ti ti-bell" aria-hidden="true" style="font-size:15px"></i>Admin<div class="av">A</div></div>
+    </div>
+
+    <div class="content">
+      <div class="pg-header">
+        <div class="pg-title">Danh sách duyệt đối tác</div>
+        <span class="pending-badge">03 hồ sơ chờ duyệt</span>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-w">
+          <i class="ti ti-search" aria-hidden="true"></i>
+          <input type="text" id="srch" placeholder="Tìm tên hoặc địa chỉ..." aria-label="Tìm kiếm">
+        </div>
+        <select id="sel-loai" aria-label="Lọc loại hình">
+          <option value="">Loại hình</option>
+          <option value="chungcu">Chung cư</option>
+          <option value="hotel">Hotel</option>
+          <option value="nhamay">Nhà máy</option>
+          <option value="office">Office</option>
+        </select>
+        <select id="sel-status" aria-label="Lọc trạng thái">
+          <option value="">Trạng thái</option>
+          <option value="pending">Pending</option>
+          <option value="review">Under Review</option>
+          <option value="needmore">Need More Info</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <select id="sel-sla" aria-label="Lọc SLA">
+          <option value="">SLA</option>
+          <option value="ok">Trong hạn</option>
+          <option value="warn">Sắp trễ (>24h)</option>
+          <option value="over">Quá hạn (>48h)</option>
+        </select>
+        <div class="sort-btn" id="sort-btn" aria-label="Sắp xếp">
+          <i class="ti ti-arrows-sort" aria-hidden="true" style="font-size:13px"></i>
+          <span id="sort-lbl">Mới nhất</span>
+          <i class="ti ti-chevron-down" aria-hidden="true" style="font-size:11px"></i>
+        </div>
+      </div>
+
+      <div class="bulk-bar hidden" id="bulk-bar">
+        <i class="ti ti-checkbox" aria-hidden="true" style="font-size:14px"></i>
+        <span id="bulk-count">0 hồ sơ được chọn</span>
+        <button class="btn-approve-bulk" id="btn-approve-all"><i class="ti ti-check" aria-hidden="true" style="font-size:13px"></i>Duyệt tất cả</button>
+        <button class="btn-reject-bulk" id="btn-reject-all"><i class="ti ti-x" aria-hidden="true" style="font-size:13px"></i>Từ chối tất cả</button>
+        <button class="sort-btn" style="margin-left:auto;font-size:11px" id="btn-clear-sel"><i class="ti ti-x" aria-hidden="true" style="font-size:11px"></i>Bỏ chọn</button>
+      </div>
+
+      <div class="tbl-wrap relative" id="tbl-wrap">
+        <table>
+          <colgroup>
+            <col style="width:30px">
+            <col style="width:210px">
+            <col style="width:95px">
+            <col style="width:145px">
+            <col style="width:110px">
+            <col style="width:95px">
+            <col style="width:80px">
+            <col style="width:175px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th><input type="checkbox" class="cb" id="cb-all" aria-label="Chọn tất cả"></th>
+              <th data-sort="name">Bất động sản <i class="ti ti-selector sort-icon" aria-hidden="true"></i></th>
+              <th>Loại hình</th>
+              <th data-sort="agent">Người đại diện <i class="ti ti-selector sort-icon" aria-hidden="true"></i></th>
+              <th data-sort="time">Thời gian gửi <i class="ti ti-selector sort-icon" aria-hidden="true"></i></th>
+              <th>Trạng thái</th>
+              <th data-sort="sla">SLA <i class="ti ti-selector sort-icon" aria-hidden="true"></i></th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+
+        <div class="drawer-overlay" id="overlay">
+          <div class="drawer" id="drawer" onclick="event.stopPropagation()">
+            <div class="drawer-hdr">
+              <div class="drawer-title" id="drw-title">Chi tiết hồ sơ</div>
+              <button class="drawer-close" id="drw-close" aria-label="Đóng"><i class="ti ti-x" aria-hidden="true" style="font-size:14px"></i></button>
+            </div>
+            <div class="drawer-body">
+              <div class="drawer-img"><i class="ti ti-building" aria-hidden="true" style="font-size:22px"></i><span id="drw-img-label">Ảnh bất động sản</span></div>
+              <div class="drawer-section">
+                <div class="drawer-sec-title">Thông tin chung</div>
+                <div class="drawer-row"><span class="drawer-lbl">Địa chỉ</span><span class="drawer-val" id="drw-addr">—</span></div>
+                <div class="drawer-row"><span class="drawer-lbl">Loại hình</span><span class="drawer-val" id="drw-loai">—</span></div>
+                <div class="drawer-row"><span class="drawer-lbl">Người đại diện</span><span class="drawer-val" id="drw-agent">—</span></div>
+                <div class="drawer-row"><span class="drawer-lbl">Số điện thoại</span><span class="drawer-val" id="drw-phone">—</span></div>
+                <div class="drawer-row"><span class="drawer-lbl">Email</span><span class="drawer-val" id="drw-email">—</span></div>
+                <div class="drawer-row"><span class="drawer-lbl">Ngày gửi</span><span class="drawer-val" id="drw-date">—</span></div>
+                <div class="drawer-row"><span class="drawer-lbl">SLA</span><span class="drawer-val" id="drw-sla">—</span></div>
+                <div class="drawer-row"><span class="drawer-lbl">Trạng thái</span><span id="drw-status">—</span></div>
+              </div>
+              <div class="drawer-section">
+                <div class="drawer-sec-title">Hồ sơ tài liệu</div>
+                <div class="docs-list" id="drw-docs"></div>
+              </div>
+            </div>
+            <div class="drawer-actions">
+              <button class="drawer-approve" id="drw-btn-approve"><i class="ti ti-check" aria-hidden="true" style="font-size:14px"></i>Duyệt hồ sơ</button>
+              <button class="drawer-reject" id="drw-btn-reject"><i class="ti ti-x" aria-hidden="true" style="font-size:14px"></i>Từ chối</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA=[
+  {id:1,name:'Toà nhà HH1',addr:'99 P.Dương Đình Nghệ, Cầu Giấy, HN',loai:'chungcu',agent:'Nguyễn Văn A',phone:'09123123123',email:'nva124@gmail.com',time:'10:00, Th2 2/2/2026',hours:18,sla:'warn',status:'pending',docs:['CCCD/Hộ chiếu','Hợp đồng sở hữu','Giấy phép KD']},
+  {id:2,name:'Capital Place',addr:'29 Liễu Giai, Ba Đình, HN',loai:'office',agent:'Trần Thị B',phone:'09887766554',email:'ttb@gmail.com',time:'08:30, Th2 2/2/2026',hours:52,sla:'over',status:'needmore',docs:['CCCD/Hộ chiếu','Hợp đồng sở hữu']},
+  {id:3,name:'Grand Hotel Hanoi',addr:'78 Trần Nhân Tông, HBT, HN',loai:'hotel',agent:'Lê Văn C',phone:'09111222333',email:'lvc@hotel.vn',time:'14:15, CN 1/2/2026',hours:31,sla:'warn',status:'review',docs:['CCCD/Hộ chiếu','Giấy phép KD','Chứng nhận PCCC']},
+  {id:4,name:'Nhà máy Thành Công',addr:'Khu CN Thăng Long, Đông Anh, HN',loai:'nhamay',agent:'Phạm Thị D',phone:'09444555666',email:'ptd@tc.vn',time:'09:00, CN 1/2/2026',hours:8,sla:'ok',status:'pending',docs:['CCCD/Hộ chiếu','Giấy phép KD','Giấy phép XD']},
+  {id:5,name:'Vinhomes Smart City',addr:'Tây Mỗ, Nam Từ Liêm, HN',loai:'chungcu',agent:'Hoàng Văn E',phone:'09222333444',email:'hve@vin.vn',time:'16:00, T7 31/1/2026',hours:4,sla:'ok',status:'approved',docs:['CCCD/Hộ chiếu','Hợp đồng sở hữu','Giấy phép KD']},
+];
+
+const LOAI_META={
+  chungcu:{label:'Chung cư',cls:'t-chungcu',icon:'ti-building'},
+  hotel:{label:'Hotel',cls:'t-hotel',icon:'ti-bed'},
+  nhamay:{label:'Nhà máy',cls:'t-nhamay',icon:'ti-building-factory-2'},
+  office:{label:'Office',cls:'t-office',icon:'ti-briefcase'},
+};
+const STATUS_META={
+  pending:{label:'Pending',cls:'s-pending'},
+  review:{label:'Under Review',cls:'s-review'},
+  needmore:{label:'Need More Info',cls:'s-needmore'},
+  approved:{label:'Approved',cls:'s-approved'},
+  rejected:{label:'Rejected',cls:'s-rejected'},
+};
+const SLA_DOCS={
+  'CCCD/Hộ chiếu':true,'Hợp đồng sở hữu':true,'Giấy phép KD':true,'Chứng nhận PCCC':false,'Giấy phép XD':true
+};
+
+let selectedIds=new Set();
+let previewId=null;
+let sortMode='newest';
+const sortCycles=['newest','oldest','priority','longest'];
+const sortLabels={newest:'Mới nhất',oldest:'Cũ nhất',priority:'Ưu tiên cao',longest:'Pending lâu nhất'};
+
+function slaInfo(h){
+  if(h>=48)return{cls:'over',dot:'sla-over',text:'sla-text over',label:h+'h — Quá hạn'};
+  if(h>=24)return{cls:'warn',dot:'sla-warn',text:'sla-text warn',label:h+'h — Sắp trễ'};
+  return{cls:'ok',dot:'sla-ok',text:'sla-text ok',label:h+'h — Trong hạn'};
+}
+
+function getFiltered(){
+  const q=document.getElementById('srch').value.toLowerCase();
+  const fl=document.getElementById('sel-loai').value;
+  const fs=document.getElementById('sel-status').value;
+  const fsla=document.getElementById('sel-sla').value;
+  let rows=DATA.filter(r=>{
+    if(q&&!r.name.toLowerCase().includes(q)&&!r.addr.toLowerCase().includes(q))return false;
+    if(fl&&r.loai!==fl)return false;
+    if(fs&&r.status!==fs)return false;
+    if(fsla&&slaInfo(r.hours).cls!==fsla)return false;
+    return true;
+  });
+  if(sortMode==='oldest')rows=[...rows].sort((a,b)=>b.hours-a.hours);
+  else if(sortMode==='newest')rows=[...rows].sort((a,b)=>a.hours-b.hours);
+  else if(sortMode==='priority')rows=[...rows].sort((a,b)=>{const o={over:0,warn:1,ok:2};return o[slaInfo(a.hours).cls]-o[slaInfo(b.hours).cls]});
+  else if(sortMode==='longest')rows=[...rows].filter(r=>r.status==='pending').sort((a,b)=>b.hours-a.hours).concat([...rows].filter(r=>r.status!=='pending'));
+  return rows;
+}
+
+function renderTable(){
+  const rows=getFiltered();
+  const tbody=document.getElementById('tbl-body');
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--color-text-secondary)"><i class="ti ti-search-off" aria-hidden="true" style="font-size:18px;display:block;margin-bottom:6px"></i>Không tìm thấy hồ sơ phù hợp</td></tr>';
+    return;
+  }
+  tbody.innerHTML=rows.map(r=>{
+    const lm=LOAI_META[r.loai];
+    const sm=STATUS_META[r.status];
+    const sl=slaInfo(r.hours);
+    const isSel=selectedIds.has(r.id);
+    return`<tr class="${isSel?'selected':''}" data-id="${r.id}">
+      <td><input type="checkbox" class="cb row-cb" data-id="${r.id}" ${isSel?'checked':''} aria-label="Chọn ${r.name}"></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="prop-thumb"><i class="ti ${lm.icon}" aria-hidden="true" style="font-size:16px"></i></div>
+          <div><div class="prop-name">${r.name}</div><div class="prop-addr">${r.addr}</div></div>
+        </div>
+      </td>
+      <td><span class="pill ${lm.cls}"><i class="ti ${lm.icon}" aria-hidden="true" style="font-size:11px"></i>${lm.label}</span></td>
+      <td>
+        <div style="font-size:12.5px;font-weight:500;color:var(--color-text-primary)">${r.agent}</div>
+        <div style="font-size:11px;color:var(--color-text-tertiary)">${r.email}</div>
+      </td>
+      <td style="font-size:12px;color:var(--color-text-secondary);white-space:nowrap">${r.time}</td>
+      <td><span class="pill ${sm.cls}">${sm.label}</span></td>
+      <td>
+        <div class="sla-wrap">
+          <div class="sla-dot ${sl.dot}"></div>
+          <span class="${sl.text}">${sl.label}</span>
+        </div>
+      </td>
+      <td>
+        <div class="action-cell">
+          <button class="btn-approve" data-act="approve" data-id="${r.id}"><i class="ti ti-check" aria-hidden="true" style="font-size:12px"></i>Duyệt</button>
+          <button class="btn-reject" data-act="reject" data-id="${r.id}"><i class="ti ti-x" aria-hidden="true" style="font-size:12px"></i>Từ chối</button>
+          <button class="btn-preview" data-act="preview" data-id="${r.id}" aria-label="Xem nhanh ${r.name}"><i class="ti ti-eye" aria-hidden="true" style="font-size:12px"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  updateBulkBar();
+}
+
+function updateBulkBar(){
+  const bar=document.getElementById('bulk-bar');
+  const cnt=selectedIds.size;
+  if(cnt>0){bar.classList.remove('hidden');document.getElementById('bulk-count').textContent=cnt+' hồ sơ được chọn';}
+  else bar.classList.add('hidden');
+  document.getElementById('cb-all').checked=cnt>0&&cnt===getFiltered().length;
+}
+
+function openDrawer(id){
+  previewId=id;
+  const r=DATA.find(x=>x.id===id);
+  if(!r)return;
+  const lm=LOAI_META[r.loai];
+  const sm=STATUS_META[r.status];
+  const sl=slaInfo(r.hours);
+  document.getElementById('drw-title').textContent=r.name;
+  document.getElementById('drw-img-label').textContent=r.name;
+  document.getElementById('drw-addr').textContent=r.addr;
+  document.getElementById('drw-loai').textContent=lm.label;
+  document.getElementById('drw-agent').textContent=r.agent;
+  document.getElementById('drw-phone').textContent=r.phone;
+  document.getElementById('drw-email').textContent=r.email;
+  document.getElementById('drw-date').textContent=r.time;
+  document.getElementById('drw-sla').textContent=sl.label;
+  document.getElementById('drw-status').innerHTML=`<span class="pill ${sm.cls}">${sm.label}</span>`;
+  document.getElementById('drw-docs').innerHTML=r.docs.map(d=>{
+    const ok=SLA_DOCS[d]!==false;
+    return`<div class="doc-item"><i class="ti ${ok?'ti-circle-check':'ti-circle-x'} ${ok?'doc-ok':'doc-miss'}" aria-hidden="true" style="font-size:14px"></i><span>${d}</span>${ok?'':'<span style="margin-left:auto;font-size:10px;color:#A32D2D">Thiếu</span>'}</div>`;
+  }).join('');
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeDrawer(){
+  document.getElementById('overlay').classList.remove('open');
+  previewId=null;
+}
+
+document.getElementById('overlay').addEventListener('click',closeDrawer);
+document.getElementById('drw-close').addEventListener('click',closeDrawer);
+document.getElementById('drw-btn-approve').addEventListener('click',()=>closeDrawer());
+document.getElementById('drw-btn-reject').addEventListener('click',()=>closeDrawer());
+
+document.getElementById('tbl-body').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-act]');
+  if(!btn)return;
+  const id=+btn.dataset.id;
+  const act=btn.dataset.act;
+  if(act==='preview'){openDrawer(id);return;}
+  const r=DATA.find(x=>x.id===id);
+  if(!r)return;
+  if(act==='approve')r.status='approved';
+  if(act==='reject')r.status='rejected';
+  renderTable();
+});
+
+document.getElementById('tbl-body').addEventListener('change',e=>{
+  if(!e.target.classList.contains('row-cb'))return;
+  const id=+e.target.dataset.id;
+  e.target.checked?selectedIds.add(id):selectedIds.delete(id);
+  const row=e.target.closest('tr');
+  if(row)row.classList.toggle('selected',e.target.checked);
+  updateBulkBar();
+});
+
+document.getElementById('cb-all').addEventListener('change',function(){
+  const rows=getFiltered();
+  rows.forEach(r=>{this.checked?selectedIds.add(r.id):selectedIds.delete(r.id)});
+  renderTable();
+});
+
+document.getElementById('btn-clear-sel').addEventListener('click',()=>{
+  selectedIds.clear();
+  renderTable();
+});
+
+document.getElementById('btn-approve-all').addEventListener('click',()=>{
+  selectedIds.forEach(id=>{const r=DATA.find(x=>x.id===id);if(r)r.status='approved';});
+  selectedIds.clear();
+  renderTable();
+});
+
+document.getElementById('btn-reject-all').addEventListener('click',()=>{
+  selectedIds.forEach(id=>{const r=DATA.find(x=>x.id===id);if(r)r.status='rejected';});
+  selectedIds.clear();
+  renderTable();
+});
+
+let si=0;
+document.getElementById('sort-btn').addEventListener('click',()=>{
+  si=(si+1)%sortCycles.length;
+  sortMode=sortCycles[si];
+  document.getElementById('sort-lbl').textContent=sortLabels[sortMode];
+  renderTable();
+});
+
+['srch','sel-loai','sel-status','sel-sla'].forEach(id=>document.getElementById(id).addEventListener('input',renderTable));
+renderTable();
+</script>
