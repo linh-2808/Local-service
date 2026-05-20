@@ -1,0 +1,531 @@
+
+<h2 class="sr-only">Màn hình duyệt quảng cáo với side drawer, device preview, moderation checklist, timeline, bulk action và confirm modal</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:var(--font-sans)}
+.frame{display:flex;height:860px;background:var(--color-background-tertiary);font-size:13px;overflow:hidden;position:relative}
+.sb{width:186px;min-width:186px;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column}
+.sb-top{padding:10px 13px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:8px}
+.sb-logo{width:28px;height:28px;border-radius:6px;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#185FA5}
+.sb-name{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.sb-sec{padding:9px 13px 3px;font-size:10px;font-weight:500;color:var(--color-text-tertiary);letter-spacing:.5px;text-transform:uppercase}
+.sbi{padding:5px 11px;margin:1px 5px;border-radius:var(--border-radius-md);color:var(--color-text-secondary);cursor:pointer;display:flex;align-items:center;gap:7px;font-size:12px}
+.sbi:hover{background:var(--color-background-secondary)}
+.sbi.active{background:#E6F1FB;color:#185FA5;font-weight:500}
+.sbi.sub{padding-left:24px;font-size:11.5px}
+.sbi.sub.cur{background:#EAF3DE;color:#3B6D11;font-weight:500}
+.nb{background:#FAEEDA;color:#854F0B;font-size:10px;padding:1px 5px;border-radius:8px;font-weight:500;margin-left:auto}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:9px 16px;display:flex;align-items:center;justify-content:space-between}
+.tbl{font-size:14px;font-weight:500;color:var(--color-text-primary)}
+.tr{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--color-text-secondary)}
+.av{width:26px;height:26px;border-radius:50%;background:#E24B4A;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#fff}
+.content{padding:12px 16px;flex:1;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.pg-hdr{display:flex;align-items:center;gap:10px}
+.pg-title{font-size:15px;font-weight:500;color:var(--color-text-primary)}
+.toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.si{position:relative;display:flex;align-items:center}
+.si i{position:absolute;left:8px;font-size:12px;color:var(--color-text-tertiary);pointer-events:none}
+input[type=text]{padding:5px 8px 5px 28px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-size:12px;width:190px}
+select{padding:5px 22px 5px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-size:12px;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center}
+.sbtn{padding:5px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-secondary);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.sbtn:hover{background:var(--color-background-secondary)}
+.bulk-bar{background:#E6F1FB;border:0.5px solid #85B7EB;border-radius:var(--border-radius-md);padding:6px 12px;display:flex;align-items:center;gap:8px;font-size:12px;color:#0C447C}
+.bulk-bar.hidden{display:none}
+.btn-ab{padding:4px 11px;border-radius:var(--border-radius-md);border:0.5px solid #3B6D11;background:#EAF3DE;color:#27500A;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:4px}
+.btn-rb{padding:4px 11px;border-radius:var(--border-radius-md);border:0.5px solid #A32D2D;background:#FCEBEB;color:#791F1F;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:4px}
+.tbl-wrap{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);overflow:hidden;flex:1;display:flex;flex-direction:column}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}
+th{padding:7px 9px;text-align:left;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);font-size:11.5px;white-space:nowrap;cursor:pointer}
+th:hover{color:var(--color-text-primary)}
+td{padding:7px 9px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--color-background-secondary)}
+tr.sel td{background:#EAF3DE}
+.pill{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap}
+.s-submitted{background:#E6F1FB;color:#0C447C}
+.s-validating{background:#EEEDFE;color:#3C3489}
+.s-pending{background:#FAEEDA;color:#854F0B}
+.s-changes{background:#FAEEDA;color:#633806;border:0.5px solid #FAC775}
+.s-approved{background:#EAF3DE;color:#27500A}
+.s-scheduled{background:#E1F5EE;color:#085041}
+.s-live{background:#EAF3DE;color:#3B6D11;border:0.5px solid #97C459}
+.s-paused{background:#F1EFE8;color:#5F5E5A}
+.s-rejected{background:#FCEBEB;color:#791F1F}
+.s-expired{background:#F1EFE8;color:#5F5E5A}
+.sla-ok{background:#EAF3DE;color:#3B6D11}
+.sla-warn{background:#FAEEDA;color:#854F0B}
+.sla-over{background:#FCEBEB;color:#A32D2D}
+.cb{width:13px;height:13px;cursor:pointer;accent-color:#378ADD}
+.ad-thumb{width:38px;height:28px;background:#F1EFE8;border:0.5px solid var(--color-border-tertiary);border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--color-text-tertiary);flex-shrink:0}
+.advertiser-av{width:22px;height:22px;border-radius:50%;background:#FAEEDA;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;color:#854F0B;flex-shrink:0}
+.btn-approve{padding:4px 10px;border-radius:var(--border-radius-md);border:0.5px solid #3B6D11;background:#EAF3DE;color:#27500A;font-size:11.5px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.btn-approve:hover{background:#C0DD97}
+.btn-reject{padding:4px 10px;border-radius:var(--border-radius-md);border:0.5px solid #A32D2D;background:#FCEBEB;color:#791F1F;font-size:11.5px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.btn-reject:hover{background:#F7C1C1}
+.btn-eye{padding:4px 7px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);font-size:11.5px;cursor:pointer;display:inline-flex;align-items:center}
+.act-cell{display:flex;align-items:center;gap:4px}
+.drw-overlay{display:none;position:absolute;top:0;right:0;bottom:0;left:0;z-index:15;background:rgba(0,0,0,.2)}
+.drw-overlay.open{display:block}
+.drw{position:absolute;top:0;right:0;width:400px;height:100%;background:var(--color-background-primary);border-left:0.5px solid var(--color-border-secondary);z-index:16;display:flex;flex-direction:column}
+.drw-top{padding:10px 14px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0}
+.drw-nav-btns{display:flex;align-items:center;gap:5px}
+.nbtn{padding:3px 9px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;color:var(--color-text-secondary);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:3px}
+.nbtn:hover{background:var(--color-background-secondary)}
+.drw-body{flex:1;overflow-y:auto;padding:13px 14px;display:flex;flex-direction:column;gap:12px}
+.drw-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:11px 13px}
+.sec-t{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.dev-tabs{display:flex;gap:4px;margin-bottom:10px}
+.dtab{padding:4px 10px;border-radius:var(--border-radius-md);font-size:12px;cursor:pointer;border:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary);background:var(--color-background-primary)}
+.dtab.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:500}
+.ad-preview-area{border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);display:flex;flex-direction:column;overflow:hidden}
+.preview-header{background:#F1EFE8;padding:6px 10px;font-size:11px;color:var(--color-text-tertiary);display:flex;align-items:center;justify-content:space-between}
+.preview-body{padding:10px}
+.ad-banner{background:#D3D1C7;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#5F5E5A;font-size:11px}
+.ad-meta{margin-top:8px}
+.ad-title-p{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.ad-sub-p{font-size:11.5px;color:var(--color-text-secondary);margin-top:2px}
+.ad-brand{display:flex;align-items:center;gap:6px;margin-top:6px}
+.brand-dot{width:20px;height:20px;border-radius:50%;background:#FAEEDA;display:flex;align-items:center;justify-content:center;font-size:9px;color:#854F0B;font-weight:500}
+.url-row{display:flex;align-items:center;gap:6px;margin-top:5px;padding:5px 7px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary)}
+.url-text{font-size:11.5px;color:#185FA5;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.icon-btn{padding:4px;border:none;background:transparent;cursor:pointer;color:var(--color-text-secondary);font-size:14px;display:flex;align-items:center}
+.icon-btn:hover{color:var(--color-text-primary)}
+.check-list{display:flex;flex-direction:column;gap:5px}
+.check-item{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);cursor:pointer}
+.check-item:hover{background:var(--color-background-secondary)}
+.check-item.checked{background:#EAF3DE;border-color:#C0DD97}
+.check-item.fail{background:#FCEBEB;border-color:#F09595}
+.ci-box{width:15px;height:15px;border-radius:3px;border:0.5px solid var(--color-border-secondary);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px}
+.ci-box.checked{background:#639922;border-color:#3B6D11;color:#fff}
+.ci-box.fail{background:#E24B4A;border-color:#A32D2D;color:#fff}
+.ci-text{font-size:12px;color:var(--color-text-primary)}
+.ci-auto{font-size:10px;color:var(--color-text-tertiary);margin-left:auto}
+.info-row{display:flex;font-size:12px;padding:4px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.info-row:last-child{border-bottom:none}
+.info-lbl{color:var(--color-text-secondary);min-width:100px;flex-shrink:0}
+.info-val{color:var(--color-text-primary)}
+.tl-list{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:8px;padding:6px 0;position:relative}
+.tl-item:not(:last-child)::after{content:'';position:absolute;left:6px;top:20px;bottom:-6px;width:0.5px;background:var(--color-border-secondary)}
+.tl-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;margin-top:2px;position:relative;z-index:1;border:1.5px solid var(--color-background-primary)}
+.td-blue{background:#378ADD}.td-green{background:#639922}.td-amber{background:#EF9F27}.td-gray{background:#B4B2A9}.td-purple{background:#7F77DD}
+.tl-a{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.tl-m{font-size:11px;color:var(--color-text-tertiary);margin-top:1px}
+.hist-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px}
+.hist-row:last-child{border-bottom:none}
+.hist-lbl{color:var(--color-text-secondary)}
+.hist-val{font-weight:500;color:var(--color-text-primary)}
+textarea{width:100%;padding:7px 9px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-size:12px;resize:vertical;min-height:65px;font-family:var(--font-sans);line-height:1.5}
+textarea:focus{outline:none;border-color:#378ADD}
+.preset-reasons{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.pr-tag{padding:3px 9px;border:0.5px solid var(--color-border-secondary);border-radius:10px;font-size:11px;cursor:pointer;color:var(--color-text-secondary)}
+.pr-tag:hover,.pr-tag.sel{background:var(--color-background-secondary);color:var(--color-text-primary);border-color:var(--color-border-primary)}
+.sticky{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-secondary);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0}
+.btn-approve-lg{padding:7px 16px;border-radius:var(--border-radius-md);border:0.5px solid #3B6D11;background:#EAF3DE;color:#27500A;font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-approve-lg:hover{background:#C0DD97}
+.btn-reject-lg{padding:7px 14px;border-radius:var(--border-radius-md);border:0.5px solid #A32D2D;background:#FCEBEB;color:#791F1F;font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-reject-lg:hover{background:#F7C1C1}
+.btn-more-lg{padding:7px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-more-lg:hover{background:var(--color-background-secondary)}
+.conf-backdrop{display:none;position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:30;align-items:center;justify-content:center}
+.conf-backdrop.show{display:flex}
+.conf-box{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:18px;width:320px}
+.conf-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:18px}
+.ci-a{background:#EAF3DE;color:#27500A}
+.ci-r{background:#FCEBEB;color:#791F1F}
+.ci-m{background:#FAEEDA;color:#633806}
+.conf-title{font-size:14px;font-weight:500;text-align:center;margin-bottom:3px;color:var(--color-text-primary)}
+.conf-sub{font-size:12px;color:var(--color-text-secondary);text-align:center;margin-bottom:12px;line-height:1.5}
+.conf-actions{display:flex;gap:8px;margin-top:12px}
+.cc{flex:1;padding:7px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);font-size:12.5px;cursor:pointer}
+.cok{flex:1;padding:7px;border-radius:var(--border-radius-md);font-size:12.5px;font-weight:500;cursor:pointer;border:0.5px solid}
+</style>
+
+<div class="frame">
+  <div class="sb">
+    <div class="sb-top">
+      <div class="sb-logo"><i class="ti ti-building" aria-hidden="true" style="font-size:13px"></i></div>
+      <div class="sb-name">Local Services</div>
+    </div>
+    <div class="sb-sec">Chính</div>
+    <div class="sbi"><i class="ti ti-home" aria-hidden="true" style="font-size:13px"></i>Tổng quan</div>
+    <div class="sbi active"><i class="ti ti-clipboard-list" aria-hidden="true" style="font-size:13px"></i>Xử lý yêu cầu</div>
+    <div class="sbi sub"><i class="ti ti-point" aria-hidden="true" style="font-size:10px"></i>Duyệt đối tác<span class="nb">3</span></div>
+    <div class="sbi sub"><i class="ti ti-point" aria-hidden="true" style="font-size:10px"></i>Ngừng hợp tác</div>
+    <div class="sbi sub cur"><i class="ti ti-point" aria-hidden="true" style="font-size:10px"></i>Duyệt quảng cáo<span class="nb">5</span></div>
+    <div class="sb-sec">Quản lý</div>
+    <div class="sbi"><i class="ti ti-users" aria-hidden="true" style="font-size:13px"></i>Đối tác</div>
+    <div class="sbi"><i class="ti ti-building-store" aria-hidden="true" style="font-size:13px"></i>NCCDV</div>
+    <div class="sbi"><i class="ti ti-shopping-cart" aria-hidden="true" style="font-size:13px"></i>Đơn hàng</div>
+    <div class="sbi"><i class="ti ti-chart-bar" aria-hidden="true" style="font-size:13px"></i>Tài chính</div>
+    <div class="sbi"><i class="ti ti-headset" aria-hidden="true" style="font-size:13px"></i>Hỗ trợ</div>
+    <div class="sbi"><i class="ti ti-settings" aria-hidden="true" style="font-size:13px"></i>Cấu hình</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tbl">Duyệt quảng cáo</div>
+      <div class="tr"><i class="ti ti-bell" aria-hidden="true" style="font-size:14px"></i>Admin<div class="av">A</div></div>
+    </div>
+    <div class="content">
+      <div class="pg-hdr">
+        <div class="pg-title">Danh sách duyệt quảng cáo</div>
+        <span class="pill s-pending">05 chờ duyệt</span>
+      </div>
+
+      <div class="toolbar">
+        <div class="si"><i class="ti ti-search" aria-hidden="true"></i><input type="text" id="srch" placeholder="Tìm tên quảng cáo..." aria-label="Tìm kiếm"></div>
+        <select id="sel-s" aria-label="Lọc trạng thái"><option value="">Trạng thái</option><option value="submitted">Submitted</option><option value="validating">Auto Validating</option><option value="pending">Pending Review</option><option value="changes">Changes Requested</option><option value="approved">Approved</option><option value="scheduled">Scheduled</option><option value="live">Live</option><option value="rejected">Rejected</option></select>
+        <select id="sel-v" aria-label="Lọc vị trí"><option value="">Vị trí</option><option value="banner">Banner chính</option><option value="popup">Popup</option><option value="feed">Feed</option></select>
+        <select id="sel-sla" aria-label="Lọc SLA"><option value="">SLA</option><option value="ok">Trong hạn</option><option value="warn">Sắp trễ</option><option value="over">Quá hạn</option></select>
+        <div class="sbtn" id="sort-btn"><i class="ti ti-arrows-sort" aria-hidden="true" style="font-size:12px"></i><span id="sort-lbl">Mới nhất</span></div>
+      </div>
+
+      <div class="bulk-bar hidden" id="bulk-bar">
+        <i class="ti ti-checkbox" aria-hidden="true" style="font-size:13px"></i>
+        <span id="bulk-cnt">0 mục được chọn</span>
+        <button class="btn-ab" id="btn-ab"><i class="ti ti-check" aria-hidden="true" style="font-size:12px"></i>Duyệt tất cả</button>
+        <button class="btn-rb" id="btn-rb"><i class="ti ti-x" aria-hidden="true" style="font-size:12px"></i>Từ chối tất cả</button>
+        <button class="sbtn" style="margin-left:auto;font-size:11px" id="btn-clr"><i class="ti ti-x" aria-hidden="true" style="font-size:11px"></i>Bỏ chọn</button>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <colgroup><col style="width:28px"><col style="width:200px"><col style="width:78px"><col style="width:90px"><col style="width:80px"><col style="width:90px"><col style="width:75px"><col style="width:175px"></colgroup>
+          <thead><tr>
+            <th><input type="checkbox" class="cb" id="cb-all" aria-label="Chọn tất cả"></th>
+            <th>Thông tin quảng cáo</th>
+            <th>Vị trí</th>
+            <th>Nhà quảng cáo</th>
+            <th>Ngân sách</th>
+            <th>Trạng thái</th>
+            <th>SLA</th>
+            <th>Hành động</th>
+          </tr></thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="drw-overlay" id="drw-overlay">
+    <div class="drw" onclick="event.stopPropagation()">
+      <div class="drw-top">
+        <div class="drw-nav-btns">
+          <button class="nbtn" id="btn-prev"><i class="ti ti-arrow-left" aria-hidden="true" style="font-size:12px"></i>Trước</button>
+          <span style="font-size:12px;color:var(--color-text-tertiary)" id="nav-ctr">1/5</span>
+          <button class="nbtn" id="btn-next">Tiếp<i class="ti ti-arrow-right" aria-hidden="true" style="font-size:12px"></i></button>
+        </div>
+        <div id="drw-status-badge"></div>
+        <button class="nbtn" id="drw-close" aria-label="Đóng"><i class="ti ti-x" aria-hidden="true" style="font-size:13px"></i></button>
+      </div>
+
+      <div class="drw-body" id="drw-body"></div>
+
+      <div class="sticky">
+        <div style="display:flex;gap:6px">
+          <button class="btn-reject-lg" id="drw-reject"><i class="ti ti-x" aria-hidden="true" style="font-size:13px"></i>Từ chối</button>
+          <button class="btn-more-lg" id="drw-more"><i class="ti ti-send" aria-hidden="true" style="font-size:13px"></i>Yêu cầu sửa</button>
+        </div>
+        <button class="btn-approve-lg" id="drw-approve"><i class="ti ti-check" aria-hidden="true" style="font-size:13px"></i>Duyệt quảng cáo</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="conf-backdrop" id="conf-back">
+    <div class="conf-box">
+      <div class="conf-icon" id="conf-icon-el"><i id="conf-icon-i" class="ti ti-check" aria-hidden="true"></i></div>
+      <div class="conf-title" id="conf-title-el"></div>
+      <div class="conf-sub" id="conf-sub-el"></div>
+      <div id="conf-reason-wrap" style="display:none">
+        <div class="preset-reasons" id="preset-reasons"></div>
+        <textarea id="conf-ta" placeholder="Nhập lý do chi tiết..." rows="3"></textarea>
+      </div>
+      <div class="conf-actions">
+        <button class="cc" id="conf-cancel">Huỷ</button>
+        <button class="cok" id="conf-ok"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADS=[
+  {id:1,name:'Deal hời thứ 3 hàng tuần',desc:'Áp dụng cư dân toà nhà',pos:'Banner chính',advertiser:'Com thờ Anh Nguyên',budget:'5.000.000',period:'18/10–30/11',status:'pending',sla:'over',slaH:52,url:'xvnam.vn',device:'IOS/Android',time:'06:00–22:00',history:{campaigns:3,rejectRate:'12%',trust:'Medium'},checks:[{label:'Nội dung hợp lệ',state:'checked',auto:false},{label:'Không chứa nội dung cấm',state:'checked',auto:true},{label:'Hình ảnh đúng size (1200×628)',state:'fail',auto:true},{label:'URL hoạt động',state:'checked',auto:true},{label:'CTA hợp lệ',state:'checked',auto:false}],timeline:[{dot:'blue',a:'Submitted',t:'18/10 08:00'},{dot:'purple',a:'Auto validation chạy',t:'18/10 08:01'},{dot:'amber',a:'Cảnh báo: ảnh sai size',t:'18/10 08:02'},{dot:'blue',a:'Admin mở xem',t:'18/10 10:00'},{dot:'gray',a:'Chờ quyết định',t:'Hiện tại'}]},
+  {id:2,name:'Khuyến mãi cuối năm 50%',desc:'Flash sale tất cả dịch vụ',pos:'Popup',advertiser:'Spa Ngọc Hà',budget:'2.500.000',period:'01/12–31/12',status:'submitted',sla:'ok',slaH:6,url:'spangochai.vn',device:'All',time:'08:00–23:00',history:{campaigns:1,rejectRate:'0%',trust:'Low'},checks:[{label:'Nội dung hợp lệ',state:'unchecked',auto:false},{label:'Không chứa nội dung cấm',state:'checked',auto:true},{label:'Hình ảnh đúng size',state:'unchecked',auto:false},{label:'URL hoạt động',state:'checked',auto:true},{label:'CTA hợp lệ',state:'unchecked',auto:false}],timeline:[{dot:'blue',a:'Submitted',t:'02/02 11:00'},{dot:'purple',a:'Auto validation đang chạy',t:'02/02 11:01'}]},
+  {id:3,name:'Giặt hơi – Giá ưu đãi',desc:'Dành cho cư dân HH1',pos:'Feed',advertiser:'Giặt sấy T&T',budget:'800.000',period:'05/11–30/11',status:'changes',sla:'warn',slaH:28,url:'giatsat-tt.vn',device:'IOS',time:'07:00–21:00',history:{campaigns:5,rejectRate:'20%',trust:'High'},checks:[{label:'Nội dung hợp lệ',state:'checked',auto:false},{label:'Không chứa nội dung cấm',state:'checked',auto:true},{label:'Hình ảnh đúng size',state:'checked',auto:true},{label:'URL hoạt động',state:'fail',auto:true},{label:'CTA hợp lệ',state:'checked',auto:false}],timeline:[{dot:'blue',a:'Submitted',t:'01/02 07:00'},{dot:'purple',a:'Auto validation',t:'01/02 07:01'},{dot:'amber',a:'URL không phản hồi (404)',t:'01/02 07:02'},{dot:'amber',a:'Admin yêu cầu sửa URL',t:'01/02 09:00'},{dot:'gray',a:'Chờ nhà QC cập nhật',t:'Hiện tại'}]},
+  {id:4,name:'Dịch vụ sửa điện nước',desc:'Phục vụ 24/7 tại chỗ',pos:'Banner chính',advertiser:'Thợ gia dụng Pro',budget:'3.200.000',period:'10/11–10/12',status:'approved',sla:'ok',slaH:4,url:'thogiadung.vn',device:'All',time:'All day',history:{campaigns:8,rejectRate:'0%',trust:'High'},checks:[{label:'Nội dung hợp lệ',state:'checked',auto:false},{label:'Không chứa nội dung cấm',state:'checked',auto:true},{label:'Hình ảnh đúng size',state:'checked',auto:true},{label:'URL hoạt động',state:'checked',auto:true},{label:'CTA hợp lệ',state:'checked',auto:false}],timeline:[{dot:'blue',a:'Submitted',t:'01/02 10:00'},{dot:'purple',a:'Auto validation passed',t:'01/02 10:01'},{dot:'blue',a:'Admin review',t:'01/02 11:00'},{dot:'green',a:'Approved',t:'01/02 11:30'}]},
+  {id:5,name:'Mắt kính thời trang',desc:'Giảm 30% toàn bộ sản phẩm',pos:'Popup',advertiser:'Optika Việt',budget:'1.500.000',period:'15/11–15/12',status:'rejected',sla:'ok',slaH:8,url:'optika.vn',device:'Android',time:'09:00–22:00',history:{campaigns:2,rejectRate:'50%',trust:'Low'},checks:[{label:'Nội dung hợp lệ',state:'fail',auto:false},{label:'Không chứa nội dung cấm',state:'fail',auto:true},{label:'Hình ảnh đúng size',state:'checked',auto:true},{label:'URL hoạt động',state:'checked',auto:true},{label:'CTA hợp lệ',state:'checked',auto:false}],timeline:[{dot:'blue',a:'Submitted',t:'31/01 09:00'},{dot:'purple',a:'Auto validation: cảnh báo content',t:'31/01 09:01'},{dot:'amber',a:'Admin review',t:'31/01 10:00'},{dot:'gray',a:'Từ chối: vi phạm chính sách',t:'31/01 10:20'}]},
+];
+
+const SM={submitted:{cls:'s-submitted',label:'Submitted'},validating:{cls:'s-validating',label:'Auto Validating'},pending:{cls:'s-pending',label:'Pending Review'},changes:{cls:'s-changes',label:'Changes Requested'},approved:{cls:'s-approved',label:'Approved'},scheduled:{cls:'s-scheduled',label:'Scheduled'},live:{cls:'s-live',label:'Live'},paused:{cls:'s-paused',label:'Paused'},rejected:{cls:'s-rejected',label:'Rejected'},expired:{cls:'s-expired',label:'Expired'}};
+const SLAM={ok:{cls:'sla-ok',l:'Trong hạn'},warn:{cls:'sla-warn',l:'Sắp trễ'},over:{cls:'sla-over',l:'Quá hạn'}};
+const DOTC={blue:'td-blue',green:'td-green',amber:'td-amber',gray:'td-gray',purple:'td-purple'};
+const PRESETS={reject:['Nội dung vi phạm chính sách','Banner sai kích thước','URL không hoạt động','Thông tin gây hiểu lầm','Ngân sách chưa xác nhận'],more:['Vui lòng sửa hình ảnh','Cập nhật URL landing page','Bổ sung thông tin liên hệ','Xác nhận thời gian chạy']};
+
+let cur=0;
+let selIds=new Set();
+let confType=null;
+let sortCur=0;
+const sortCycles=['newest','oldest','priority','budget'];
+const sortLabels={newest:'Mới nhất',oldest:'Cũ nhất',priority:'Ưu tiên cao',budget:'Ngân sách cao'};
+let devTab='desktop';
+
+function slaInfo(sla,h){return SLAM[sla]?{cls:SLAM[sla].cls,label:SLAM[sla].l+' ('+h+'h)'}:{cls:'sla-ok',label:h+'h'};}
+
+function getFiltered(){
+  const q=(document.getElementById('srch')||{value:''}).value.toLowerCase();
+  const fs=(document.getElementById('sel-s')||{value:''}).value;
+  const fv=(document.getElementById('sel-v')||{value:''}).value;
+  const fsla=(document.getElementById('sel-sla')||{value:''}).value;
+  let rows=ADS.filter(r=>{
+    if(q&&!r.name.toLowerCase().includes(q))return false;
+    if(fs&&r.status!==fs)return false;
+    if(fv){const pm={banner:'Banner chính',popup:'Popup',feed:'Feed'};if(r.pos!==pm[fv])return false;}
+    if(fsla&&r.sla!==fsla)return false;
+    return true;
+  });
+  const mode=sortCycles[sortCur];
+  if(mode==='oldest')rows=[...rows].sort((a,b)=>b.slaH-a.slaH);
+  if(mode==='priority')rows=[...rows].sort((a,b)=>{const o={over:0,warn:1,ok:2};return o[a.sla]-o[b.sla];});
+  if(mode==='budget')rows=[...rows].sort((a,b)=>parseInt(b.budget.replace(/\D/g,''))-parseInt(a.budget.replace(/\D/g,'')));
+  return rows;
+}
+
+function renderTable(){
+  const rows=getFiltered();
+  const tbody=document.getElementById('tbl-body');
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:22px;color:var(--color-text-secondary)"><i class="ti ti-ad-off" aria-hidden="true" style="font-size:17px;display:block;margin-bottom:5px"></i>Không tìm thấy quảng cáo phù hợp</td></tr>';
+    updateBulk();return;
+  }
+  tbody.innerHTML=rows.map(r=>{
+    const sm=SM[r.status]||SM.pending;
+    const sl=slaInfo(r.sla,r.slaH);
+    const isSel=selIds.has(r.id);
+    const failCnt=r.checks.filter(c=>c.state==='fail').length;
+    return`<tr class="${isSel?'sel':''}" data-id="${r.id}">
+      <td><input type="checkbox" class="cb row-cb" data-id="${r.id}" ${isSel?'checked':''} aria-label="Chọn ${r.name}"></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="ad-thumb"><i class="ti ti-photo" aria-hidden="true" style="font-size:14px"></i></div>
+          <div>
+            <div style="font-weight:500;font-size:12.5px;color:var(--color-text-primary)">${r.name}</div>
+            <div style="font-size:11px;color:var(--color-text-tertiary)">${r.desc}${failCnt>0?` · <span style="color:#A32D2D">${failCnt} lỗi</span>`:''}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="pill" style="background:#F1EFE8;color:#5F5E5A;font-size:11px">${r.pos}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:5px">
+          <div class="advertiser-av">${r.advertiser.charAt(0)}</div>
+          <span style="font-size:11.5px;color:var(--color-text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70px">${r.advertiser}</span>
+        </div>
+      </td>
+      <td style="font-size:12px;color:var(--color-text-primary);white-space:nowrap">₫${r.budget}</td>
+      <td><span class="pill ${sm.cls}">${sm.label}</span></td>
+      <td><span class="pill ${sl.cls}" style="font-size:11px">${sl.label}</span></td>
+      <td>
+        <div class="act-cell">
+          <button class="btn-approve" data-act="approve" data-id="${r.id}"><i class="ti ti-check" aria-hidden="true" style="font-size:12px"></i>Duyệt</button>
+          <button class="btn-reject" data-act="reject" data-id="${r.id}"><i class="ti ti-x" aria-hidden="true" style="font-size:12px"></i>Từ chối</button>
+          <button class="btn-eye" data-act="preview" data-id="${r.id}" aria-label="Xem chi tiết ${r.name}"><i class="ti ti-eye" aria-hidden="true" style="font-size:13px"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  updateBulk();
+}
+
+function updateBulk(){
+  const bar=document.getElementById('bulk-bar');
+  const cnt=selIds.size;
+  if(cnt>0){bar.classList.remove('hidden');document.getElementById('bulk-cnt').textContent=cnt+' mục được chọn';}
+  else bar.classList.add('hidden');
+  document.getElementById('cb-all').checked=cnt>0&&cnt===getFiltered().length;
+}
+
+function openDrawer(id){
+  cur=ADS.findIndex(x=>x.id===id);
+  renderDrawer();
+  document.getElementById('drw-overlay').classList.add('open');
+}
+
+function renderDrawer(){
+  const r=ADS[cur];
+  const sm=SM[r.status]||SM.pending;
+  const sl=slaInfo(r.sla,r.slaH);
+  document.getElementById('nav-ctr').textContent=(cur+1)+'/'+ADS.length;
+  document.getElementById('drw-status-badge').innerHTML=`<span class="pill ${sm.cls}">${sm.label}</span> <span class="pill ${sl.cls}" style="font-size:11px">${sl.label}</span>`;
+  const failCnt=r.checks.filter(c=>c.state==='fail').length;
+  const passedCnt=r.checks.filter(c=>c.state==='checked').length;
+  const adH=devTab==='mobile'?120:devTab==='tablet'?160:80;
+  document.getElementById('drw-body').innerHTML=`
+  <div class="drw-card">
+    <div class="sec-t">Preview quảng cáo</div>
+    <div class="dev-tabs" id="dev-tabs">
+      <div class="dtab ${devTab==='desktop'?'active':''}" data-dev="desktop">Desktop</div>
+      <div class="dtab ${devTab==='mobile'?'active':''}" data-dev="mobile">Mobile</div>
+      <div class="dtab ${devTab==='tablet'?'active':''}" data-dev="tablet">Tablet</div>
+    </div>
+    <div class="ad-preview-area">
+      <div class="preview-header"><span>${r.pos} · ${r.device}</span><span>${r.period}</span></div>
+      <div class="preview-body">
+        <div class="ad-banner" style="height:${adH}px"><i class="ti ti-photo" aria-hidden="true" style="font-size:${devTab==='desktop'?'22px':'16px'}"></i></div>
+        <div class="ad-meta">
+          <div class="ad-title-p">${r.name}</div>
+          <div class="ad-sub-p">${r.desc}</div>
+          <div class="ad-brand"><div class="brand-dot">${r.advertiser.charAt(0)}</div><span style="font-size:12px;color:var(--color-text-secondary)">${r.advertiser}</span></div>
+          <div class="url-row">
+            <i class="ti ti-link" aria-hidden="true" style="font-size:13px;color:var(--color-text-tertiary)"></i>
+            <span class="url-text">${r.url}</span>
+            <button class="icon-btn" aria-label="Mở URL"><i class="ti ti-external-link" aria-hidden="true"></i></button>
+            <button class="icon-btn" aria-label="Copy URL"><i class="ti ti-copy" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="drw-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div class="sec-t" style="margin-bottom:0">Moderation checklist</div>
+      <span style="font-size:11.5px;color:${failCnt>0?'#A32D2D':'#3B6D11'}">${passedCnt}/${r.checks.length} passed${failCnt>0?' · '+failCnt+' lỗi':''}</span>
+    </div>
+    <div class="check-list">
+      ${r.checks.map((c,i)=>`
+        <div class="check-item ${c.state==='fail'?'fail':c.state==='checked'?'checked':''}" data-idx="${i}" id="ci-${cur}-${i}">
+          <div class="ci-box ${c.state==='fail'?'fail':c.state==='checked'?'checked':''}"><i class="ti ti-${c.state==='fail'?'x':c.state==='checked'?'check':''}" aria-hidden="true"></i></div>
+          <span class="ci-text">${c.label}</span>
+          ${c.auto?'<span class="ci-auto"><i class="ti ti-robot" aria-hidden="true" style="font-size:11px"></i> Auto</span>':''}
+        </div>`).join('')}
+    </div>
+  </div>
+  <div class="drw-card">
+    <div class="sec-t">Thông tin chiến dịch</div>
+    <div class="info-row"><span class="info-lbl">Vị trí hiển thị</span><span class="info-val">${r.pos}</span></div>
+    <div class="info-row"><span class="info-lbl">Thiết bị</span><span class="info-val">${r.device}</span></div>
+    <div class="info-row"><span class="info-lbl">Khung giờ</span><span class="info-val">${r.time}</span></div>
+    <div class="info-row"><span class="info-lbl">Thời gian chạy</span><span class="info-val">${r.period}</span></div>
+    <div class="info-row"><span class="info-lbl">Ngân sách</span><span class="info-val" style="color:#3B6D11;font-weight:500">₫${r.budget}</span></div>
+  </div>
+  <div class="drw-card">
+    <div class="sec-t">Lịch sử nhà quảng cáo</div>
+    <div class="hist-row"><span class="hist-lbl">Nhà quảng cáo</span><span class="hist-val">${r.advertiser}</span></div>
+    <div class="hist-row"><span class="hist-lbl">Số chiến dịch</span><span class="hist-val">${r.history.campaigns}</span></div>
+    <div class="hist-row"><span class="hist-lbl">Tỷ lệ reject</span><span class="hist-val" style="color:${parseInt(r.history.rejectRate)>15?'#A32D2D':'#3B6D11'}">${r.history.rejectRate}</span></div>
+    <div class="hist-row"><span class="hist-lbl">Trust level</span><span class="hist-val"><span class="pill ${r.history.trust==='High'?'s-approved':r.history.trust==='Medium'?'s-pending':'s-rejected'}">${r.history.trust}</span></span></div>
+  </div>
+  <div class="drw-card">
+    <div class="sec-t">Timeline xử lý</div>
+    <div class="tl-list">${r.timeline.map(tl=>`
+      <div class="tl-item"><div class="tl-dot ${DOTC[tl.dot]}"></div><div><div class="tl-a">${tl.a}</div><div class="tl-m">${tl.t}</div></div></div>`).join('')}
+    </div>
+  </div>
+  <div class="drw-card">
+    <div class="sec-t">Ghi chú nội bộ</div>
+    <textarea placeholder="Nhập ghi chú, lý do xử lý..." rows="3"></textarea>
+    <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:5px">Ghi chú sẽ lưu vào audit log và gửi nhà QC nếu yêu cầu sửa đổi.</div>
+  </div>`;
+
+  document.getElementById('dev-tabs').addEventListener('click',e=>{
+    const t=e.target.closest('[data-dev]');
+    if(!t)return;
+    devTab=t.dataset.dev;
+    renderDrawer();
+  });
+  document.querySelectorAll('.check-item[data-idx]').forEach(el=>el.addEventListener('click',function(){
+    const idx=+this.dataset.idx;
+    const c=ADS[cur].checks[idx];
+    if(c.auto)return;
+    c.state=c.state==='checked'?'unchecked':'checked';
+    renderDrawer();
+  }));
+}
+
+function closeDrawer(){document.getElementById('drw-overlay').classList.remove('open');}
+
+document.getElementById('drw-overlay').addEventListener('click',closeDrawer);
+document.getElementById('drw-close').addEventListener('click',closeDrawer);
+document.getElementById('btn-prev').addEventListener('click',()=>{if(cur>0){cur--;renderDrawer();}});
+document.getElementById('btn-next').addEventListener('click',()=>{if(cur<ADS.length-1){cur++;renderDrawer();}});
+
+function openConf(type,id){
+  confType=type;
+  if(id!==undefined){cur=ADS.findIndex(x=>x.id===id);if(cur<0)cur=0;}
+  const ic=document.getElementById('conf-icon-el');
+  const ii=document.getElementById('conf-icon-i');
+  const tt=document.getElementById('conf-title-el');
+  const sub=document.getElementById('conf-sub-el');
+  const rw=document.getElementById('conf-reason-wrap');
+  const ok=document.getElementById('conf-ok');
+  const pr=document.getElementById('preset-reasons');
+  if(type==='approve'){
+    ic.className='conf-icon ci-a';ii.className='ti ti-check';
+    tt.textContent='Xác nhận duyệt quảng cáo?';
+    const failCnt=ADS[cur].checks.filter(c=>c.state==='fail').length;
+    sub.textContent=failCnt>0?`Có ${failCnt} mục chưa pass. Bạn vẫn muốn duyệt?`:'Quảng cáo sẽ được xếp lịch chạy sau khi duyệt.';
+    rw.style.display='none';ok.style.background='#EAF3DE';ok.style.color='#27500A';ok.style.borderColor='#3B6D11';ok.textContent='Duyệt quảng cáo';
+  } else if(type==='reject'){
+    ic.className='conf-icon ci-r';ii.className='ti ti-x';
+    tt.textContent='Từ chối quảng cáo?';sub.textContent='Vui lòng chọn hoặc nhập lý do từ chối để gửi phản hồi cho nhà quảng cáo.';
+    rw.style.display='block';pr.innerHTML=PRESETS.reject.map(p=>`<span class="pr-tag">${p}</span>`).join('');
+    ok.style.background='#FCEBEB';ok.style.color='#791F1F';ok.style.borderColor='#A32D2D';ok.textContent='Từ chối';
+  } else {
+    ic.className='conf-icon ci-m';ii.className='ti ti-send';
+    tt.textContent='Yêu cầu sửa đổi?';sub.textContent='Nhà quảng cáo sẽ nhận email với nội dung yêu cầu và có thể nộp lại.';
+    rw.style.display='block';pr.innerHTML=PRESETS.more.map(p=>`<span class="pr-tag">${p}</span>`).join('');
+    ok.style.background='#FAEEDA';ok.style.color='#633806';ok.style.borderColor='#854F0B';ok.textContent='Gửi yêu cầu';
+  }
+  document.querySelectorAll('.pr-tag').forEach(t=>t.addEventListener('click',function(){
+    this.classList.toggle('sel');
+    const ta=document.getElementById('conf-ta');
+    const sels=[...document.querySelectorAll('.pr-tag.sel')].map(x=>x.textContent);
+    ta.value=sels.join('\n');
+  }));
+  document.getElementById('conf-back').classList.add('show');
+}
+
+document.getElementById('conf-cancel').addEventListener('click',()=>document.getElementById('conf-back').classList.remove('show'));
+document.getElementById('conf-back').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
+document.getElementById('conf-ok').addEventListener('click',()=>{
+  const r=ADS[cur];
+  if(confType==='approve')r.status='approved';
+  else if(confType==='reject')r.status='rejected';
+  else r.status='changes';
+  document.getElementById('conf-back').classList.remove('show');
+  renderTable();
+  if(document.getElementById('drw-overlay').classList.contains('open'))renderDrawer();
+});
+
+document.getElementById('drw-approve').addEventListener('click',()=>openConf('approve'));
+document.getElementById('drw-reject').addEventListener('click',()=>openConf('reject'));
+document.getElementById('drw-more').addEventListener('click',()=>openConf('more'));
+
+document.getElementById('tbl-body').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-act]');
+  if(!btn)return;
+  const id=+btn.dataset.id;
+  const act=btn.dataset.act;
+  if(act==='preview'){openDrawer(id);return;}
+  openConf(act,id);
+});
+
+document.getElementById('tbl-body').addEventListener('change',e=>{
+  if(!e.target.classList.contains('row-cb'))return;
+  const id=+e.target.dataset.id;
+  e.target.checked?selIds.add(id):selIds.delete(id);
+  e.target.closest('tr').classList.toggle('sel',e.target.checked);
+  updateBulk();
+});
+document.getElementById('cb-all').addEventListener('change',function(){
+  getFiltered().forEach(r=>this.checked?selIds.add(r.id):selIds.delete(r.id));
+  renderTable();
+});
+document.getElementById('btn-clr').addEventListener('click',()=>{selIds.clear();renderTable();});
+document.getElementById('btn-ab').addEventListener('click',()=>{selIds.forEach(id=>{const r=ADS.find(x=>x.id===id);if(r)r.status='approved';});selIds.clear();renderTable();});
+document.getElementById('btn-rb').addEventListener('click',()=>{selIds.forEach(id=>{const r=ADS.find(x=>x.id===id);if(r)r.status='rejected';});selIds.clear();renderTable();});
+document.getElementById('sort-btn').addEventListener('click',()=>{sortCur=(sortCur+1)%sortCycles.length;document.getElementById('sort-lbl').textContent=sortLabels[sortCycles[sortCur]];renderTable();});
+['srch','sel-s','sel-v','sel-sla'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',renderTable);});
+
+renderTable();
+</script>

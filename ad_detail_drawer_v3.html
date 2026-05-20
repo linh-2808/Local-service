@@ -1,0 +1,509 @@
+
+<h2 class="sr-only">Drawer chi tiết duyệt quảng cáo với device preview, auto validation, moderation checklist, version history, advertiser history và AI moderation</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:var(--font-sans)}
+.page{display:flex;height:940px;background:var(--color-background-tertiary);font-size:13px;overflow:hidden}
+.list-col{width:220px;min-width:220px;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column}
+.lc-hdr{padding:11px 13px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.lc-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.lc-items{flex:1;overflow-y:auto}
+.lc-item{padding:9px 13px;cursor:pointer;border-bottom:0.5px solid var(--color-border-tertiary)}
+.lc-item:hover{background:var(--color-background-secondary)}
+.lc-item.active{background:#E6F1FB;border-left:2.5px solid #378ADD}
+.lc-name{font-size:12.5px;font-weight:500;color:var(--color-text-primary);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-sub{font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px}
+.lc-badges{display:flex;gap:4px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap}
+.s-pending{background:#FAEEDA;color:#854F0B}
+.s-validating{background:#EEEDFE;color:#3C3489}
+.s-changes{background:#FAEEDA;color:#633806;border:0.5px solid #FAC775}
+.s-approved{background:#EAF3DE;color:#27500A}
+.s-rejected{background:#FCEBEB;color:#791F1F}
+.s-submitted{background:#E6F1FB;color:#0C447C}
+.sla-ok{background:#EAF3DE;color:#3B6D11}
+.sla-warn{background:#FAEEDA;color:#854F0B}
+.sla-over{background:#FCEBEB;color:#A32D2D}
+.drawer{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;background:var(--color-background-primary)}
+.drw-topbar{padding:10px 15px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
+.nav-area{display:flex;align-items:center;gap:6px}
+.nbtn{padding:4px 9px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;color:var(--color-text-secondary);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:3px}
+.nbtn:hover{background:var(--color-background-secondary)}
+.drw-body{flex:1;overflow-y:auto;padding:13px 15px;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:12px 14px}
+.sec-t{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between}
+.two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.dev-tabs{display:flex;gap:3px;margin-bottom:10px}
+.dtab{padding:4px 10px;border-radius:var(--border-radius-md);font-size:12px;cursor:pointer;border:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary)}
+.dtab.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:500;border-color:var(--color-border-primary)}
+.preview-frame{border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);overflow:hidden;background:var(--color-background-secondary)}
+.pf-bar{background:#F1EFE8;padding:5px 9px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--color-text-tertiary)}
+.pf-dots{display:flex;gap:4px}
+.pf-dot{width:7px;height:7px;border-radius:50%}
+.pf-body{padding:0}
+.desktop-layout{display:flex;flex-direction:column;gap:0}
+.dsk-nav{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:6px 10px;display:flex;align-items:center;gap:8px}
+.dsk-logo-mock{width:20px;height:8px;background:#D3D1C7;border-radius:2px}
+.dsk-nav-items{display:flex;gap:6px}
+.dsk-ni{width:30px;height:6px;background:#E8E6DF;border-radius:2px}
+.dsk-content{padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.dsk-banner{border-radius:var(--border-radius-md);display:flex;align-items:center;justify-content:center;border:1.5px dashed var(--color-border-secondary);position:relative;overflow:hidden}
+.banner-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px}
+.banner-tag{position:absolute;top:4px;right:4px;background:#378ADD;color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:500}
+.mob-layout{display:flex;flex-direction:column}
+.mob-status-bar{background:#2C2C2A;height:8px;border-radius:0}
+.mob-nav{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:5px 8px;display:flex;align-items:center;gap:5px}
+.mob-content{padding:6px 8px;display:flex;flex-direction:column;gap:5px}
+.mob-banner{border-radius:6px;display:flex;align-items:center;justify-content:center;border:1.5px dashed var(--color-border-secondary);position:relative}
+.popup-layout{position:relative;min-height:120px;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;padding:10px}
+.popup-bg{position:absolute;inset:0;background:rgba(0,0,0,.15);border-radius:var(--border-radius-md)}
+.popup-box{position:relative;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:10px;width:140px;z-index:1}
+.popup-close{position:absolute;top:4px;right:6px;font-size:11px;color:var(--color-text-tertiary);cursor:pointer}
+.url-bar{display:flex;align-items:center;gap:6px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:5px 8px;margin-bottom:8px}
+.url-text{font-size:12px;color:#185FA5;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.url-status{display:flex;align-items:center;gap:3px;font-size:11px}
+.url-ok{color:#3B6D11}
+.url-fail{color:#A32D2D}
+.url-loading{color:#854F0B}
+.url-domain{font-size:11px;color:var(--color-text-tertiary)}
+.ibtn{padding:4px 5px;border:none;background:transparent;cursor:pointer;color:var(--color-text-secondary);font-size:14px;display:flex;align-items:center}
+.ibtn:hover{color:var(--color-text-primary)}
+.check-list{display:flex;flex-direction:column;gap:5px}
+.ci{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);cursor:pointer}
+.ci:hover{background:var(--color-background-secondary)}
+.ci.ok{background:#EAF3DE;border-color:#C0DD97}
+.ci.fail{background:#FCEBEB;border-color:#F09595}
+.ci.warn{background:#FAEEDA;border-color:#FAC775}
+.ci-box{width:15px;height:15px;border-radius:3px;border:0.5px solid var(--color-border-secondary);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ci-box.ok{background:#639922;border-color:#3B6D11;color:#fff}
+.ci-box.fail{background:#E24B4A;border-color:#A32D2D;color:#fff}
+.ci-box.warn{background:#EF9F27;border-color:#854F0B;color:#fff}
+.ci-label{font-size:12px;color:var(--color-text-primary);flex:1}
+.ci-badge{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:500}
+.auto-badge{background:#EEEDFE;color:#3C3489}
+.ai-badge{background:#E1F5EE;color:#085041}
+.manual-badge{background:#F1EFE8;color:#5F5E5A}
+.val-rule{display:flex;align-items:flex-start;gap:7px;padding:6px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);font-size:12px}
+.val-rule.triggered{background:#FCEBEB;border-color:#F09595}
+.val-rule.passed{background:#EAF3DE;border-color:#C0DD97}
+.val-rule.skipped{background:#F1EFE8;border-color:#D3D1C7}
+.rule-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.rule-icon.triggered{color:#A32D2D}
+.rule-icon.passed{color:#3B6D11}
+.rule-icon.skipped{color:#888780}
+.rule-body{flex:1;min-width:0}
+.rule-name{font-weight:500;color:var(--color-text-primary);font-size:12px}
+.rule-desc{font-size:11px;color:var(--color-text-secondary);margin-top:1px}
+.rule-badge{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:500;margin-left:auto;flex-shrink:0}
+.rb-triggered{background:#FCEBEB;color:#791F1F}
+.rb-passed{background:#EAF3DE;color:#27500A}
+.rb-skip{background:#F1EFE8;color:#5F5E5A}
+.ver-list{display:flex;flex-direction:column;gap:6px}
+.ver-item{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);cursor:pointer}
+.ver-item:hover{background:var(--color-background-secondary)}
+.ver-item.current{background:#E6F1FB;border-color:#85B7EB}
+.ver-num{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0}
+.ver-info{flex:1;min-width:0}
+.ver-name{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.ver-meta{font-size:11px;color:var(--color-text-tertiary)}
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ai-item{padding:7px 9px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary)}
+.ai-item.safe{background:#EAF3DE;border-color:#C0DD97}
+.ai-item.risky{background:#FCEBEB;border-color:#F09595}
+.ai-item.pending{background:#F1EFE8;border-color:#D3D1C7}
+.ai-label{font-size:11px;font-weight:500;color:var(--color-text-secondary);margin-bottom:3px;display:flex;align-items:center;gap:4px}
+.ai-result{font-size:12px;font-weight:500}
+.ai-safe{color:#27500A}
+.ai-risky{color:#791F1F}
+.ai-pending{color:#888780}
+.conf-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,.3);z-index:20;align-items:center;justify-content:center}
+.conf-overlay.show{display:flex}
+.conf-box{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:18px;width:300px}
+.conf-icon-wrap{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 9px;font-size:18px}
+.cfa{background:#EAF3DE;color:#27500A}
+.cfr{background:#FCEBEB;color:#791F1F}
+.cfm{background:#FAEEDA;color:#633806}
+.conf-title{font-size:14px;font-weight:500;text-align:center;color:var(--color-text-primary);margin-bottom:3px}
+.conf-sub{font-size:12px;color:var(--color-text-secondary);text-align:center;line-height:1.5;margin-bottom:12px}
+textarea{width:100%;padding:7px 9px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-size:12px;resize:vertical;font-family:var(--font-sans);line-height:1.5}
+.preset-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px}
+.ptag{padding:3px 8px;border:0.5px solid var(--color-border-secondary);border-radius:10px;font-size:11px;cursor:pointer;color:var(--color-text-secondary)}
+.ptag.sel,.ptag:hover{background:var(--color-background-secondary);color:var(--color-text-primary);border-color:var(--color-border-primary)}
+.cf-actions{display:flex;gap:7px;margin-top:10px}
+.cf-cancel{flex:1;padding:7px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);font-size:12.5px;cursor:pointer}
+.cf-ok{flex:1;padding:7px;border-radius:var(--border-radius-md);font-size:12.5px;font-weight:500;cursor:pointer;border:0.5px solid}
+.sticky{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-secondary);padding:10px 15px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.btn-r{padding:7px 14px;border-radius:var(--border-radius-md);border:0.5px solid #A32D2D;background:#FCEBEB;color:#791F1F;font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-r:hover{background:#F7C1C1}
+.btn-m{padding:7px 13px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-m:hover{background:var(--color-background-secondary)}
+.btn-a{padding:7px 16px;border-radius:var(--border-radius-md);border:0.5px solid #3B6D11;background:#EAF3DE;color:#27500A;font-size:12.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-a:hover{background:#C0DD97}
+.info-row{display:flex;font-size:12px;padding:4px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.info-row:last-child{border-bottom:none}
+.ir-l{color:var(--color-text-secondary);min-width:90px;flex-shrink:0}
+.ir-v{color:var(--color-text-primary)}
+.tl-list{display:flex;flex-direction:column}
+.tl-row{display:flex;gap:9px;padding:6px 0;position:relative}
+.tl-row:not(:last-child)::after{content:'';position:absolute;left:6px;top:19px;bottom:-6px;width:0.5px;background:var(--color-border-secondary)}
+.tl-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;margin-top:2px;z-index:1;position:relative;border:1.5px solid var(--color-background-primary)}
+.td-b{background:#378ADD}.td-g{background:#639922}.td-a{background:#EF9F27}.td-gr{background:#B4B2A9}.td-p{background:#7F77DD}
+.tl-a{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.tl-m{font-size:11px;color:var(--color-text-tertiary);margin-top:1px}
+</style>
+
+<div class="page" style="position:relative">
+  <div class="list-col">
+    <div class="lc-hdr">
+      <div class="lc-title">Duyệt quảng cáo <span style="background:#FAEEDA;color:#854F0B;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:500">5</span></div>
+      <input type="text" style="width:100%;padding:5px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);font-size:12px;color:var(--color-text-primary)" placeholder="Tìm quảng cáo..." aria-label="Tìm">
+    </div>
+    <div class="lc-items" id="lc-items"></div>
+  </div>
+
+  <div class="drawer">
+    <div class="drw-topbar">
+      <div class="nav-area">
+        <button class="nbtn" id="btn-prev"><i class="ti ti-arrow-left" aria-hidden="true" style="font-size:12px"></i>Trước</button>
+        <span style="font-size:12px;color:var(--color-text-tertiary)" id="nav-ctr">1 / 5</span>
+        <button class="nbtn" id="btn-next">Tiếp<i class="ti ti-arrow-right" aria-hidden="true" style="font-size:12px"></i></button>
+      </div>
+      <div id="top-badges" style="display:flex;gap:6px;align-items:center"></div>
+      <div style="display:flex;gap:5px">
+        <button class="nbtn"><i class="ti ti-external-link" aria-hidden="true" style="font-size:12px"></i>Trang đầy đủ</button>
+        <button class="nbtn"><i class="ti ti-copy" aria-hidden="true" style="font-size:12px"></i></button>
+      </div>
+    </div>
+
+    <div class="drw-body" id="drw-body"></div>
+
+    <div class="sticky">
+      <div style="display:flex;gap:6px">
+        <button class="btn-r" id="drw-reject"><i class="ti ti-x" aria-hidden="true" style="font-size:13px"></i>Từ chối</button>
+        <button class="btn-m" id="drw-more"><i class="ti ti-send" aria-hidden="true" style="font-size:13px"></i>Yêu cầu sửa</button>
+      </div>
+      <button class="btn-a" id="drw-approve"><i class="ti ti-check" aria-hidden="true" style="font-size:13px"></i>Duyệt quảng cáo</button>
+    </div>
+  </div>
+
+  <div class="conf-overlay" id="conf-overlay">
+    <div class="conf-box">
+      <div class="conf-icon-wrap" id="cf-icon"><i class="ti ti-check" id="cf-icon-i" aria-hidden="true"></i></div>
+      <div class="conf-title" id="cf-title"></div>
+      <div class="conf-sub" id="cf-sub"></div>
+      <div id="cf-reason" style="display:none">
+        <div class="preset-tags" id="cf-presets"></div>
+        <textarea id="cf-ta" rows="3" placeholder="Nhập lý do chi tiết..."></textarea>
+      </div>
+      <div class="cf-actions">
+        <button class="cf-cancel" id="cf-cancel">Huỷ</button>
+        <button class="cf-ok" id="cf-ok">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADS=[
+  {id:1,name:'Deal hời thứ 3 hàng tuần',advertiser:'Com thờ Anh Nguyên',pos:'Banner chính',device:'IOS/Android',budget:'5.000.000',period:'18/10–30/11',time:'06:00–22:00',url:'xvnam.vn',urlAlive:true,domain:'xvnam.vn · đã xác minh',status:'pending',sla:'over',slaH:52,
+    versions:[{n:1,label:'Version 1 (gốc)',date:'10/10 09:00',status:'rejected',note:'URL không hợp lệ'},{n:2,label:'Version 2 (sửa URL)',date:'15/10 14:00',status:'pending',note:'Đang chờ duyệt'}],
+    checks:[{l:'Nội dung hợp lệ',s:'ok',src:'manual'},{l:'Không chứa nội dung cấm',s:'ok',src:'auto'},{l:'Hình ảnh đúng size (1200×628)',s:'fail',src:'auto'},{l:'URL hoạt động',s:'ok',src:'auto'},{l:'CTA hợp lệ',s:'ok',src:'manual'}],
+    rules:[{name:'image_ratio_invalid',desc:'Tỷ lệ ảnh không phải 1.91:1',state:'triggered'},{name:'url_reachable',desc:'URL phản hồi HTTP 200',state:'passed'},{name:'keyword_banned',desc:'Không có từ khoá cấm',state:'passed'},{name:'budget_verified',desc:'Ngân sách đã thanh toán',state:'passed'}],
+    ai:[{label:'OCR scan',result:'Không có text ẩn',safe:true},{label:'Adult detection',result:'Safe (0.02)',safe:true},{label:'Violence detection',result:'Safe (0.01)',safe:true},{label:'Keyword scan',result:'1 cảnh báo nhẹ',safe:false}],
+    history:{campaigns:3,rejectRate:'12%',trust:'Medium',lastReject:'15/09 · URL lỗi'},
+    timeline:[{dot:'b',a:'Submitted v1',t:'10/10 09:00'},{dot:'p',a:'Auto validation chạy',t:'10/10 09:01'},{dot:'a',a:'URL không hợp lệ – auto flag',t:'10/10 09:02'},{dot:'b',a:'Admin reject v1',t:'10/10 11:00'},{dot:'b',a:'Submitted v2 (URL sửa)',t:'15/10 14:00'},{dot:'p',a:'Auto validation passed',t:'15/10 14:01'},{dot:'gr',a:'Chờ review thủ công',t:'Hiện tại'}]},
+  {id:2,name:'Khuyến mãi cuối năm 50%',advertiser:'Spa Ngọc Hà',pos:'Popup',device:'All',budget:'2.500.000',period:'01/12–31/12',time:'08:00–23:00',url:'spangochai.vn',urlAlive:true,domain:'spangochai.vn · chưa xác minh',status:'submitted',sla:'ok',slaH:6,
+    versions:[{n:1,label:'Version 1 (gốc)',date:'02/02 11:00',status:'pending',note:'Đang validate'}],
+    checks:[{l:'Nội dung hợp lệ',s:'pending',src:'manual'},{l:'Không chứa nội dung cấm',s:'ok',src:'auto'},{l:'Hình ảnh đúng size',s:'pending',src:'auto'},{l:'URL hoạt động',s:'ok',src:'auto'},{l:'CTA hợp lệ',s:'pending',src:'manual'}],
+    rules:[{name:'image_ratio_invalid',desc:'Tỷ lệ ảnh không phải 1.91:1',state:'skipped'},{name:'url_reachable',desc:'URL phản hồi HTTP 200',state:'passed'},{name:'keyword_banned',desc:'Không có từ khoá cấm',state:'passed'},{name:'budget_verified',desc:'Ngân sách đã thanh toán',state:'skipped'}],
+    ai:[{label:'OCR scan',result:'Đang chạy...',safe:null},{label:'Adult detection',result:'Đang chạy...',safe:null},{label:'Violence detection',result:'Đang chạy...',safe:null},{label:'Keyword scan',result:'Đang chạy...',safe:null}],
+    history:{campaigns:1,rejectRate:'0%',trust:'Low',lastReject:'—'},
+    timeline:[{dot:'b',a:'Submitted',t:'02/02 11:00'},{dot:'p',a:'Auto validation đang chạy',t:'02/02 11:01'}]},
+  {id:3,name:'Giặt hơi – Giá ưu đãi',advertiser:'Giặt sấy T&T',pos:'Feed',device:'IOS',budget:'800.000',period:'05/11–30/11',time:'07:00–21:00',url:'giatsat-tt.vn',urlAlive:false,domain:'giatsat-tt.vn · lỗi 404',status:'changes',sla:'warn',slaH:28,
+    versions:[{n:1,label:'Version 1 (gốc)',date:'01/02 07:00',status:'rejected',note:'URL 404'},{n:2,label:'Version 2 (sửa URL)',date:'01/02 15:00',status:'changes',note:'Chờ xác nhận'}],
+    checks:[{l:'Nội dung hợp lệ',s:'ok',src:'manual'},{l:'Không chứa nội dung cấm',s:'ok',src:'auto'},{l:'Hình ảnh đúng size',s:'ok',src:'auto'},{l:'URL hoạt động',s:'fail',src:'auto'},{l:'CTA hợp lệ',s:'ok',src:'manual'}],
+    rules:[{name:'image_ratio_invalid',desc:'Tỷ lệ ảnh không phải 1.91:1',state:'passed'},{name:'url_reachable',desc:'URL phản hồi HTTP 200',state:'triggered'},{name:'keyword_banned',desc:'Không có từ khoá cấm',state:'passed'},{name:'budget_verified',desc:'Ngân sách đã thanh toán',state:'passed'}],
+    ai:[{label:'OCR scan',result:'Không có text ẩn',safe:true},{label:'Adult detection',result:'Safe (0.00)',safe:true},{label:'Violence detection',result:'Safe (0.01)',safe:true},{label:'Keyword scan',result:'Clean',safe:true}],
+    history:{campaigns:5,rejectRate:'20%',trust:'High',lastReject:'01/02 · URL lỗi'},
+    timeline:[{dot:'b',a:'Submitted v1',t:'01/02 07:00'},{dot:'p',a:'URL check failed',t:'01/02 07:02'},{dot:'a',a:'Admin yêu cầu sửa URL',t:'01/02 09:00'},{dot:'b',a:'Submitted v2',t:'01/02 15:00'},{dot:'gr',a:'Chờ xác nhận URL mới',t:'Hiện tại'}]},
+  {id:4,name:'Dịch vụ sửa điện nước',advertiser:'Thợ gia dụng Pro',pos:'Banner chính',device:'All',budget:'3.200.000',period:'10/11–10/12',time:'All day',url:'thogiadung.vn',urlAlive:true,domain:'thogiadung.vn · đã xác minh',status:'approved',sla:'ok',slaH:4,
+    versions:[{n:1,label:'Version 1 (gốc)',date:'01/02 10:00',status:'approved',note:'Đã duyệt'}],
+    checks:[{l:'Nội dung hợp lệ',s:'ok',src:'manual'},{l:'Không chứa nội dung cấm',s:'ok',src:'auto'},{l:'Hình ảnh đúng size',s:'ok',src:'auto'},{l:'URL hoạt động',s:'ok',src:'auto'},{l:'CTA hợp lệ',s:'ok',src:'manual'}],
+    rules:[{name:'image_ratio_invalid',desc:'Tỷ lệ ảnh',state:'passed'},{name:'url_reachable',desc:'URL HTTP 200',state:'passed'},{name:'keyword_banned',desc:'Keyword check',state:'passed'},{name:'budget_verified',desc:'Ngân sách OK',state:'passed'}],
+    ai:[{label:'OCR scan',result:'Clean',safe:true},{label:'Adult detection',result:'Safe (0.00)',safe:true},{label:'Violence detection',result:'Safe (0.00)',safe:true},{label:'Keyword scan',result:'Clean',safe:true}],
+    history:{campaigns:8,rejectRate:'0%',trust:'High',lastReject:'—'},
+    timeline:[{dot:'b',a:'Submitted',t:'01/02 10:00'},{dot:'p',a:'Auto validation passed',t:'01/02 10:01'},{dot:'b',a:'Admin approved',t:'01/02 11:30'},{dot:'g',a:'Đã duyệt',t:'01/02 11:30'}]},
+  {id:5,name:'Mắt kính thời trang',advertiser:'Optika Việt',pos:'Popup',device:'Android',budget:'1.500.000',period:'15/11–15/12',time:'09:00–22:00',url:'optika.vn',urlAlive:true,domain:'optika.vn · đã xác minh',status:'rejected',sla:'ok',slaH:8,
+    versions:[{n:1,label:'Version 1 (gốc)',date:'31/01 09:00',status:'rejected',note:'Vi phạm chính sách'}],
+    checks:[{l:'Nội dung hợp lệ',s:'fail',src:'manual'},{l:'Không chứa nội dung cấm',s:'fail',src:'ai'},{l:'Hình ảnh đúng size',s:'ok',src:'auto'},{l:'URL hoạt động',s:'ok',src:'auto'},{l:'CTA hợp lệ',s:'ok',src:'manual'}],
+    rules:[{name:'image_ratio_invalid',desc:'Tỷ lệ ảnh',state:'passed'},{name:'url_reachable',desc:'URL HTTP 200',state:'passed'},{name:'keyword_banned',desc:'Phát hiện từ khoá cấm',state:'triggered'},{name:'budget_verified',desc:'Ngân sách OK',state:'passed'}],
+    ai:[{label:'OCR scan',result:'Phát hiện text vi phạm',safe:false},{label:'Adult detection',result:'Safe (0.03)',safe:true},{label:'Violence detection',result:'Safe (0.00)',safe:true},{label:'Keyword scan',result:'2 từ khoá cấm',safe:false}],
+    history:{campaigns:2,rejectRate:'50%',trust:'Low',lastReject:'31/01 · keyword vi phạm'},
+    timeline:[{dot:'b',a:'Submitted',t:'31/01 09:00'},{dot:'p',a:'AI scan: phát hiện vi phạm',t:'31/01 09:01'},{dot:'a',a:'Auto flag: keyword cấm',t:'31/01 09:02'},{dot:'b',a:'Admin review',t:'31/01 10:00'},{dot:'gr',a:'Rejected',t:'31/01 10:20'}]},
+];
+
+const SM={pending:{cls:'s-pending',l:'Pending Review'},submitted:{cls:'s-submitted',l:'Submitted'},changes:{cls:'s-changes',l:'Changes Requested'},approved:{cls:'s-approved',l:'Approved'},rejected:{cls:'s-rejected',l:'Rejected'},validating:{cls:'s-validating',l:'Validating'}};
+const SLAM={ok:{cls:'sla-ok'},warn:{cls:'sla-warn'},over:{cls:'sla-over'}};
+const DOTCLS={b:'td-b',g:'td-g',a:'td-a',gr:'td-gr',p:'td-p'};
+const REASONS={reject:['Vi phạm chính sách nội dung','Hình ảnh sai kích thước/tỷ lệ','URL không hoạt động','Thông tin gây hiểu lầm','Từ khoá cấm phát hiện'],more:['Vui lòng sửa kích thước ảnh','Cập nhật URL landing page','Bổ sung thông tin sản phẩm','Xác nhận lại ngân sách']};
+let cur=0;
+let devTab='desktop';
+let confType=null;
+
+function renderList(){
+  document.getElementById('lc-items').innerHTML=ADS.map((r,i)=>{
+    const sm=SM[r.status]||SM.pending;
+    return`<div class="lc-item ${i===cur?'active':''}" data-i="${i}">
+      <div class="lc-name">${r.name}</div>
+      <div class="lc-sub">${r.pos} · ${r.advertiser}</div>
+      <div class="lc-badges"><span class="pill ${sm.cls}">${sm.l}</span><span class="pill ${SLAM[r.sla].cls}">${r.slaH}h</span></div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.lc-item').forEach(el=>el.addEventListener('click',function(){cur=+this.dataset.i;renderAll();}));
+}
+
+function previewHtml(r){
+  if(r.pos==='Popup'){
+    return`<div class="popup-layout">
+      <div class="popup-bg"></div>
+      <div class="popup-box">
+        <div class="popup-close"><i class="ti ti-x" aria-hidden="true" style="font-size:13px"></i></div>
+        <div style="background:#D3D1C7;height:50px;border-radius:4px;display:flex;align-items:center;justify-content:center;margin-bottom:7px"><i class="ti ti-photo" aria-hidden="true" style="font-size:16px;color:#888780"></i></div>
+        <div style="font-size:11.5px;font-weight:500;color:var(--color-text-primary);margin-bottom:2px">${r.name}</div>
+        <div style="font-size:10.5px;color:var(--color-text-secondary);margin-bottom:6px">${r.advertiser}</div>
+        <div style="background:#378ADD;border-radius:4px;padding:4px;text-align:center;font-size:10.5px;font-weight:500;color:#fff">Xem ngay</div>
+      </div>
+    </div>`;
+  }
+  if(devTab==='mobile'){
+    return`<div class="mob-layout">
+      <div class="mob-status-bar"></div>
+      <div class="mob-nav"><div style="width:14px;height:6px;background:#D3D1C7;border-radius:2px"></div><div style="flex:1;margin:0 6px;background:#F1EFE8;border-radius:10px;height:12px"></div><div style="width:14px;height:14px;background:#E6F1FB;border-radius:50%"></div></div>
+      <div class="mob-content">
+        <div style="background:#F1EFE8;border-radius:6px;height:30px;margin-bottom:4px;display:flex;align-items:center;padding:0 8px;gap:5px"><div style="width:40px;height:6px;background:#D3D1C7;border-radius:2px"></div><div style="width:30px;height:5px;background:#E8E6DF;border-radius:2px;margin-left:auto"></div></div>
+        <div class="mob-banner" style="height:80px;background:#F1EFE8">
+          <i class="ti ti-photo" aria-hidden="true" style="font-size:18px;color:#888780"></i>
+          <div class="banner-tag">${r.pos}</div>
+        </div>
+        <div style="margin-top:5px"><div style="font-size:11.5px;font-weight:500;color:var(--color-text-primary)">${r.name}</div><div style="font-size:10.5px;color:var(--color-text-secondary)">${r.advertiser}</div></div>
+        <div style="background:#F1EFE8;border-radius:4px;height:8px;margin-top:4px"></div>
+        <div style="background:#F1EFE8;border-radius:4px;height:8px;width:70%"></div>
+      </div>
+    </div>`;
+  }
+  if(devTab==='tablet'){
+    return`<div class="desktop-layout">
+      <div class="dsk-nav" style="padding:5px 10px"><div class="dsk-logo-mock" style="width:16px;height:7px"></div><div class="dsk-nav-items">${Array(3).fill('<div class="dsk-ni" style="width:24px;height:5px"></div>').join('')}</div><div style="margin-left:auto;width:50px;height:12px;background:#E6F1FB;border-radius:4px"></div></div>
+      <div class="dsk-content">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:4px">${Array(2).fill('<div style="height:7px;background:#F1EFE8;border-radius:3px"></div>').join('')}</div>
+        <div class="dsk-banner" style="height:100px;background:#F1EFE8">
+          <div class="banner-inner"><i class="ti ti-photo" aria-hidden="true" style="font-size:18px;color:#888780"></i><div style="font-size:10.5px;color:var(--color-text-secondary)">${r.name}</div></div>
+          <div class="banner-tag">${r.pos}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+  return`<div class="desktop-layout">
+    <div class="dsk-nav"><div class="dsk-logo-mock"></div><div class="dsk-nav-items">${Array(4).fill('<div class="dsk-ni"></div>').join('')}</div><div style="margin-left:auto;width:60px;height:14px;background:#E6F1FB;border-radius:4px"></div></div>
+    <div class="dsk-content">
+      <div class="dsk-banner" style="height:110px;background:#F1EFE8">
+        <div class="banner-inner"><i class="ti ti-photo" aria-hidden="true" style="font-size:22px;color:#888780"></i><div style="font-size:11.5px;font-weight:500;color:var(--color-text-primary)">${r.name}</div><div style="font-size:10.5px;color:var(--color-text-secondary)">${r.advertiser}</div></div>
+        <div class="banner-tag">${r.pos}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:4px">${Array(3).fill('<div style="height:8px;background:#F1EFE8;border-radius:3px"></div>').join('')}</div>
+    </div>
+  </div>`;
+}
+
+function renderBody(){
+  const r=ADS[cur];
+  const failCnt=r.checks.filter(c=>c.s==='fail').length;
+  const okCnt=r.checks.filter(c=>c.s==='ok').length;
+  const triggered=r.rules.filter(x=>x.state==='triggered').length;
+  const aiIssues=r.ai.filter(x=>x.safe===false).length;
+  document.getElementById('drw-body').innerHTML=`
+  <div class="card">
+    <div class="sec-t"><span>Preview quảng cáo</span><span style="font-size:11px;color:var(--color-text-secondary)">${r.period} · ${r.device}</span></div>
+    <div class="dev-tabs" id="dev-tabs">
+      ${['desktop','mobile','tablet'].map(d=>`<div class="dtab${devTab===d?' active':''}" data-dev="${d}">${d==='desktop'?'Desktop':d==='mobile'?'Mobile':'Tablet'}</div>`).join('')}
+    </div>
+    <div class="preview-frame">
+      <div class="pf-bar">
+        <div class="pf-dots"><div class="pf-dot" style="background:#E24B4A"></div><div class="pf-dot" style="background:#EF9F27"></div><div class="pf-dot" style="background:#639922"></div></div>
+        <span>${devTab==='desktop'?'Homepage · '+r.pos:devTab==='mobile'?'Mobile · '+r.pos:'Tablet · '+r.pos}</span>
+        <span></span>
+      </div>
+      <div class="pf-body">${previewHtml(r)}</div>
+    </div>
+    <div class="url-bar" style="margin-top:9px;margin-bottom:0">
+      <i class="ti ti-link" aria-hidden="true" style="font-size:13px;color:var(--color-text-tertiary)"></i>
+      <span class="url-text">${r.url}</span>
+      <span class="url-status ${r.urlAlive?'url-ok':'url-fail'}"><i class="ti ti-${r.urlAlive?'circle-check':'circle-x'}" aria-hidden="true" style="font-size:13px"></i>${r.urlAlive?'Hoạt động':'Lỗi 404'}</span>
+      <span class="url-domain" style="margin-left:6px;padding-left:6px;border-left:0.5px solid var(--color-border-tertiary)">${r.domain}</span>
+      <button class="ibtn" aria-label="Mở URL"><i class="ti ti-external-link" aria-hidden="true"></i></button>
+      <button class="ibtn" aria-label="Kiểm tra URL"><i class="ti ti-refresh" aria-hidden="true"></i></button>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="sec-t">
+        <span>Moderation checklist</span>
+        <span style="font-size:11.5px;color:${failCnt>0?'#A32D2D':'#3B6D11'}">${okCnt}/${r.checks.length} passed${failCnt>0?' · '+failCnt+' lỗi':''}</span>
+      </div>
+      <div class="check-list">
+        ${r.checks.map((c,i)=>`
+          <div class="ci ${c.s==='ok'?'ok':c.s==='fail'?'fail':''}" data-ci="${i}">
+            <div class="ci-box ${c.s==='ok'?'ok':c.s==='fail'?'fail':''}"><i class="ti ti-${c.s==='ok'?'check':c.s==='fail'?'x':''}" aria-hidden="true" style="font-size:10px"></i></div>
+            <span class="ci-label">${c.l}</span>
+            <span class="ci-badge ${c.src==='auto'?'auto-badge':c.src==='ai'?'ai-badge':'manual-badge'}">${c.src==='auto'?'Auto':c.src==='ai'?'AI':'Manual'}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-t">
+        <span>Auto validation rules</span>
+        ${triggered>0?`<span style="font-size:11.5px;color:#A32D2D">${triggered} triggered</span>`:'<span style="font-size:11.5px;color:#3B6D11">All passed</span>'}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        ${r.rules.map(rule=>`
+          <div class="val-rule ${rule.state}">
+            <i class="ti ti-${rule.state==='triggered'?'alert-circle':rule.state==='passed'?'circle-check':'minus'} rule-icon ${rule.state}" aria-hidden="true"></i>
+            <div class="rule-body">
+              <div class="rule-name">${rule.name}</div>
+              <div class="rule-desc">${rule.desc}</div>
+            </div>
+            <span class="rule-badge ${rule.state==='triggered'?'rb-triggered':rule.state==='passed'?'rb-passed':'rb-skip'}">${rule.state==='triggered'?'Triggered':rule.state==='passed'?'Passed':'Skip'}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="sec-t">
+        <span>AI moderation</span>
+        <span style="font-size:11px;background:#E1F5EE;color:#085041;padding:2px 7px;border-radius:8px;font-weight:500"><i class="ti ti-robot" aria-hidden="true" style="font-size:11px"></i> Phase 2</span>
+      </div>
+      <div class="ai-grid">
+        ${r.ai.map(ai=>`
+          <div class="ai-item ${ai.safe===true?'safe':ai.safe===false?'risky':'pending'}">
+            <div class="ai-label"><i class="ti ti-${ai.label.includes('OCR')?'scan':ai.label.includes('Adult')||ai.label.includes('Violence')?'shield':ai.label.includes('Keyword')?'text-scan':'robot'}" aria-hidden="true" style="font-size:12px"></i>${ai.label}</div>
+            <div class="ai-result ${ai.safe===true?'ai-safe':ai.safe===false?'ai-risky':'ai-pending'}">${ai.result}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-t">Version history</div>
+      <div class="ver-list">
+        ${r.versions.map(v=>{
+          const isCur=v.n===r.versions.length;
+          const vs=v.status==='approved'?'s-approved':v.status==='rejected'?'s-rejected':'s-pending';
+          return`<div class="ver-item ${isCur?'current':''}">
+            <div class="ver-num" style="background:${isCur?'#E6F1FB':'#F1EFE8'};color:${isCur?'#185FA5':'#888780'}">v${v.n}</div>
+            <div class="ver-info"><div class="ver-name">${v.label}</div><div class="ver-meta">${v.date} · ${v.note}</div></div>
+            <span class="pill ${vs}" style="font-size:10px">${v.status==='approved'?'OK':v.status==='rejected'?'Reject':'Pending'}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sec-t">Lịch sử nhà quảng cáo — ${r.advertiser}</div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:8px">
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px 10px"><div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:3px">Số chiến dịch</div><div style="font-size:18px;font-weight:500;color:var(--color-text-primary)">${r.history.campaigns}</div></div>
+      <div style="background:${parseInt(r.history.rejectRate)>15?'#FCEBEB':'var(--color-background-secondary)'};border-radius:var(--border-radius-md);padding:8px 10px"><div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:3px">Tỷ lệ reject</div><div style="font-size:18px;font-weight:500;color:${parseInt(r.history.rejectRate)>15?'#791F1F':'var(--color-text-primary)'}">${r.history.rejectRate}</div></div>
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px 10px"><div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:3px">Trust level</div><div style="margin-top:3px"><span class="pill ${r.history.trust==='High'?'s-approved':r.history.trust==='Medium'?'s-pending':'s-rejected'}">${r.history.trust}</span></div></div>
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px 10px"><div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:3px">Lần reject gần nhất</div><div style="font-size:11.5px;font-weight:500;color:var(--color-text-primary)">${r.history.lastReject}</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sec-t">Timeline xử lý</div>
+    <div class="tl-list">
+      ${r.timeline.map(tl=>`
+        <div class="tl-row"><div class="tl-dot ${DOTCLS[tl.dot]}"></div><div><div class="tl-a">${tl.a}</div><div class="tl-m">${tl.t}</div></div></div>`).join('')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sec-t">Ghi chú nội bộ</div>
+    <textarea rows="3" placeholder="Nhập ghi chú admin, lý do quyết định..."></textarea>
+    <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:5px">Ghi chú lưu vào audit log, gửi nhà QC nếu yêu cầu sửa.</div>
+  </div>`;
+
+  document.getElementById('dev-tabs').addEventListener('click',e=>{
+    const t=e.target.closest('[data-dev]');
+    if(!t)return;
+    devTab=t.dataset.dev;
+    renderBody();
+  });
+  document.querySelectorAll('.ci[data-ci]').forEach(el=>el.addEventListener('click',function(){
+    const ci=ADS[cur].checks[+this.dataset.ci];
+    if(ci.src!=='manual')return;
+    ci.s=ci.s==='ok'?'pending':'ok';
+    renderBody();
+  }));
+}
+
+function renderAll(){
+  const r=ADS[cur];
+  const sm=SM[r.status]||SM.pending;
+  document.getElementById('nav-ctr').textContent=(cur+1)+'/'+ADS.length;
+  document.getElementById('top-badges').innerHTML=`<span class="pill ${sm.cls}">${sm.l}</span><span class="pill ${SLAM[r.sla].cls}">${r.slaH}h</span>`;
+  renderList();
+  renderBody();
+}
+
+function openConf(type){
+  confType=type;
+  const r=ADS[cur];
+  const icon=document.getElementById('cf-icon');
+  const ii=document.getElementById('cf-icon-i');
+  const tt=document.getElementById('cf-title');
+  const sub=document.getElementById('cf-sub');
+  const rw=document.getElementById('cf-reason');
+  const ok=document.getElementById('cf-ok');
+  const pr=document.getElementById('cf-presets');
+  const failCnt=r.checks.filter(c=>c.s==='fail').length;
+  const triggered=r.rules.filter(x=>x.state==='triggered').length;
+  if(type==='approve'){
+    icon.className='conf-icon-wrap cfa';ii.className='ti ti-check';
+    tt.textContent='Duyệt quảng cáo này?';
+    sub.textContent=failCnt+triggered>0?`Còn ${failCnt} lỗi checklist, ${triggered} rule triggered. Vẫn muốn duyệt?`:'Tất cả validation passed. Xác nhận duyệt.';
+    rw.style.display='none';ok.style.cssText='background:#EAF3DE;color:#27500A;border-color:#3B6D11';ok.textContent='Duyệt';
+  } else if(type==='reject'){
+    icon.className='conf-icon-wrap cfr';ii.className='ti ti-x';
+    tt.textContent='Từ chối quảng cáo?';sub.textContent='Chọn hoặc nhập lý do gửi nhà quảng cáo.';
+    rw.style.display='block';pr.innerHTML=REASONS.reject.map(p=>`<span class="ptag">${p}</span>`).join('');
+    ok.style.cssText='background:#FCEBEB;color:#791F1F;border-color:#A32D2D';ok.textContent='Từ chối';
+  } else {
+    icon.className='conf-icon-wrap cfm';ii.className='ti ti-send';
+    tt.textContent='Yêu cầu sửa đổi?';sub.textContent='Nhà QC nhận email và có thể nộp lại phiên bản mới.';
+    rw.style.display='block';pr.innerHTML=REASONS.more.map(p=>`<span class="ptag">${p}</span>`).join('');
+    ok.style.cssText='background:#FAEEDA;color:#633806;border-color:#854F0B';ok.textContent='Gửi yêu cầu';
+  }
+  document.querySelectorAll('.ptag').forEach(t=>t.addEventListener('click',function(){
+    this.classList.toggle('sel');
+    document.getElementById('cf-ta').value=[...document.querySelectorAll('.ptag.sel')].map(x=>x.textContent).join('\n');
+  }));
+  document.getElementById('conf-overlay').classList.add('show');
+}
+
+document.getElementById('cf-cancel').addEventListener('click',()=>document.getElementById('conf-overlay').classList.remove('show'));
+document.getElementById('conf-overlay').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
+document.getElementById('cf-ok').addEventListener('click',()=>{
+  if(confType==='approve')ADS[cur].status='approved';
+  else if(confType==='reject')ADS[cur].status='rejected';
+  else ADS[cur].status='changes';
+  document.getElementById('conf-overlay').classList.remove('show');
+  renderAll();
+});
+document.getElementById('drw-approve').addEventListener('click',()=>openConf('approve'));
+document.getElementById('drw-reject').addEventListener('click',()=>openConf('reject'));
+document.getElementById('drw-more').addEventListener('click',()=>openConf('more'));
+document.getElementById('btn-prev').addEventListener('click',()=>{if(cur>0){cur--;renderAll();}});
+document.getElementById('btn-next').addEventListener('click',()=>{if(cur<ADS.length-1){cur++;renderAll();}});
+
+renderAll();
+</script>
